@@ -29,11 +29,7 @@ from bepuik_tools.riggenerator import WIDGET_CUBE
 """
 TODO: wiki: Peripheral bones are: bones which are not controlled and have no controlled descendants
 
-TODO: better widget for hips,chest,head?
-
 TODO: twist measurement axis perhaps too strict at 80degrees? upleg should allow 45 degrees from perpendicular to hips
-
-TODO: improve shoulder swing, too loose now
 
 TODO: maya/max keymaps?
 

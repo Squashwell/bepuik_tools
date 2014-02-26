@@ -1889,10 +1889,23 @@ def rig_chest_to_shoulder(chest,shoulder,relative_x_axis):
     c.axis_a = shoulder, 'Y'
     c.axis_b = shoulder, 'Y'
     
+    #prevents the shoulder from going too far up
     c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',shoulder)   
     c.axis_a = shoulder, 'Y'
     c.axis_b = shoulder, 'Y'
-    c.max_swing = 45    
+    c.max_swing = 45
+    
+    #prevents the shoulder from going too far down
+    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',shoulder)   
+    c.axis_a = shoulder, 'Z'
+    c.axis_b = shoulder, 'Y'
+    c.max_swing = 95
+    
+    #prevents the shoulder from going too far forward or back
+    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',shoulder)   
+    c.axis_a = shoulder, relative_x_axis
+    c.axis_b = shoulder, relative_x_axis
+    c.max_swing = 22      
 
 def get_pchan_target_names(ob):
     pchan_target_names = set()
