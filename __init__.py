@@ -100,6 +100,7 @@ class BEPUikTools(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label = "BEPUik Rigging Tools"
+    bl_category = "BEPUik"
 
     def draw(self, context):
         col = self.layout.column(align=True)
@@ -131,29 +132,30 @@ class BEPUikTools(bpy.types.Panel):
 #        self.layout.operator(ApplyFingerRig.bl_idname)
 #        self.layout.operator(ApplyArmRig.bl_idname)
  
-class BEPUikDebug(bpy.types.Panel):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_label = "BEPUik Debug"
-    bl_options = {'DEFAULT_CLOSED'}
-    
-    def draw(self, context):
-        col = self.layout.column(align=True)
-        
-#        if context.mode == 'POSE' and context.object.pose:
-#            pose = context.object.pose
-#            col.prop(pose,"bepuik_calculating")
-#            col.prop(pose,"bepuik_has_bepuik_bones")
-#            col.prop(pose,"bepuik_match_solved")
-#            col.prop(pose,"bepuik_selection_as_dragcontrol")
-#            col.prop(pose,"bepuik_selection_as_statecontrol")
-#            col.prop(pose,"bepuik_skip")
-#            col.prop(pose,"bepuik_stiff_children")
-#            col.prop(pose,"bepuik_stiff_invisible_bones")
-#            col.prop(pose,"bepuik_working_set")
-        
-        col.operator(BEPUikTest.bl_idname)
-        col.operator(BEPUikShowDebugMatrix.bl_idname)
+#class BEPUikDebug(bpy.types.Panel):
+#    bl_space_type = "VIEW_3D"
+#    bl_region_type = "TOOLS"
+#    bl_label = "BEPUik Debug"
+#    bl_options = {'DEFAULT_CLOSED'}
+#    bl_category = "BEPUik"
+#    
+#    def draw(self, context):
+#        col = self.layout.column(align=True)
+#        
+##        if context.mode == 'POSE' and context.object.pose:
+##            pose = context.object.pose
+##            col.prop(pose,"bepuik_calculating")
+##            col.prop(pose,"bepuik_has_bepuik_bones")
+##            col.prop(pose,"bepuik_match_solved")
+##            col.prop(pose,"bepuik_selection_as_dragcontrol")
+##            col.prop(pose,"bepuik_selection_as_statecontrol")
+##            col.prop(pose,"bepuik_skip")
+##            col.prop(pose,"bepuik_stiff_children")
+##            col.prop(pose,"bepuik_stiff_invisible_bones")
+##            col.prop(pose,"bepuik_working_set")
+#        
+#        col.operator(BEPUikTest.bl_idname)
+#        col.operator(BEPUikShowDebugMatrix.bl_idname)
 
 class CreateFullBodyMetaArmature(bpy.types.Operator):
     '''Create Full Body Meta Armature'''
