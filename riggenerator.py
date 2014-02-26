@@ -1024,7 +1024,7 @@ def degrees_between(a,b):
     return math.degrees(math.acos(max(min(a.dot(b),1),-1))) 
 
 def rig_target_affected(target,affected,headtotail=0,position_rigidity=2,orientation_rigidity=.1):
-    metaconstraint = affected.new_meta_blender_constraint('BEPUIK_TARGET',target,target.name)
+    metaconstraint = affected.new_meta_blender_constraint('BEPUIK_CONTROL',target,target.name)
     metaconstraint.connection_b = target
     metaconstraint.orientation_rigidity = orientation_rigidity
     metaconstraint.bepuik_rigidity = position_rigidity
@@ -1896,7 +1896,7 @@ def get_pchan_target_names(ob):
     pchan_target_names = set()
     for pchan in ob.pose.bones:
         for con in pchan.constraints:
-            if con.type == 'BEPUIK_TARGET':
+            if con.type == 'BEPUIK_CONTROL':
                 if con.connection_subtarget:
                     pchan_target_names.add(con.connection_subtarget)
                     

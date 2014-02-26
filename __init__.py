@@ -93,8 +93,8 @@ class BEPUikAutoRigLayers(bpy.types.Panel):
 
     def draw(self,context):
         riggenerator.draw_rig_layers(self.layout)
-        self.layout.prop(bpy.context.object,'show_x_ray')
-        self.layout.prop(bpy.context.object.data,'show_bepuik_targets')
+        self.layout.prop(bpy.context.object,"show_x_ray")
+        self.layout.prop(bpy.context.object.data,"show_bepuik_controls")
 
 class BEPUikTools(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
@@ -106,15 +106,15 @@ class BEPUikTools(bpy.types.Panel):
         col.operator(CreateFullBodyMetaArmature.bl_idname)
         col.operator(CreateFullBodyRig.bl_idname)
         col.separator()
-        col.label("Create Target")
+        col.label("Create Control with Target")
         
-        op = col.operator(CreateTarget.bl_idname,text="Position and Orientation")
+        op = col.operator(CreateControl.bl_idname,text="Position and Orientation")
         op.head_tail = 0
         op.lock_rotation = False
         op.scale = .1
         op.widget_name = WIDGET_CUBE
         
-        op = col.operator(CreateTarget.bl_idname,text="Tail Position Only")
+        op = col.operator(CreateControl.bl_idname,text="Tail Position Only")
         op.head_tail = 1
         op.lock_rotation = True
         op.scale = .1
@@ -238,16 +238,16 @@ class CreateFullBodyRig(bpy.types.Operator):
         riggenerator.widgetdata_refresh_defaults()
         rig_obj = riggenerator.rig_full_body(bpy.context.object,self)
         rig_obj.show_x_ray = True
-        rig_obj.data.show_bepuik_targets = True
+        rig_obj.data.show_bepuik_controls = True
         rig_obj.use_bepuik_inactive_targets_follow = True
         rig_obj.use_bepuik_dynamic = True
         return {'FINISHED'}
 
-def pchan_get_first_target_with_pulled_point(ob,pchan,x,y,z):
+def pchan_get_first_control_with_pulled_point(ob,pchan,x,y,z):
     assert bpy.context.mode == 'POSE'
     
     for constraint in pchan.constraints:
-        if constraint.type == 'BEPUIK_TARGET':
+        if constraint.type == 'BEPUIK_CONTROL':
             if constraint.connection_subtarget in ob.pose.bones: 
                 if constraint.pulled_point[0] == x:
                     if constraint.pulled_point[1] == y:
@@ -256,34 +256,34 @@ def pchan_get_first_target_with_pulled_point(ob,pchan,x,y,z):
                     
     return None
 
-def pchan_get_any_tail_target(ob,pchan):
+def phcan_get_any_tail_control(ob,pchan):
     assert bpy.context.mode == 'POSE'
     
-    target_constraint = pchan_get_first_target_with_pulled_point(ob,pchan, 0.0, 1.0, 0.0)
+    control = pchan_get_first_control_with_pulled_point(ob,pchan, 0.0, 1.0, 0.0)
     
-    if target_constraint:
-        target_constraint
+    if control:
+        return control
     else:
         for pchild in pchan.children:
-            target_constraint = pchan_get_first_target_with_pulled_point(ob,pchan, 0.0, 0.0, 0.0)
-            if target_constraint:
+            control = pchan_get_first_control_with_pulled_point(ob,pchan, 0.0, 0.0, 0.0)
+            if control:
                 if((pchild.bone.head - pchan.bone.tail).length <= .0001):
-                    return target_constraint
+                    return control
                 
     return None
 
-def pchan_get_any_head_target(ob,pchan):
+def phcan_get_any_head_control(ob,pchan):
     assert bpy.context.mode == 'POSE'
     
-    target_constraint = pchan_get_first_target_with_pulled_point(ob,pchan, 0.0, 0.0, 0.0)
+    control = pchan_get_first_control_with_pulled_point(ob,pchan, 0.0, 0.0, 0.0)
     
-    if target_constraint:
-        return target_constraint
+    if control:
+        return control
     elif pchan.parent:
-        target_constraint = pchan_get_first_target_with_pulled_point(ob,pchan.parent, 0.0, 1.0, 0.0)
-        if target_constraint:
+        control = pchan_get_first_control_with_pulled_point(ob,pchan.parent, 0.0, 1.0, 0.0)
+        if control:
             if((pchan.parent.bone.tail - pchan.bone.head).length <= .0001):
-                return target_constraint
+                return control
                 
     return None
         
@@ -298,18 +298,18 @@ def is_unique_bone_name(ob,bone_name):
     return True
     
     
-class CreateTarget(bpy.types.Operator):
-    '''Create Target Point'''
-    bl_idname = "bepuik.create_target"
-    bl_label = "Create Target"
-    bl_description = "Create a target bone for the currently selected bepuik bones"
+class CreateControl(bpy.types.Operator):
+    '''Create Control'''
+    bl_idname = "bepuik.create_control"
+    bl_label = "Create Control"
+    bl_description = "Create a control and target bone for the currently selected bepuik bones"
     bl_options = {'REGISTER','UNDO'}
     
     head_tail = bpy.props.FloatProperty(name="Head to Tail",description="Head to tail position of the target",default=0,max=1,min=0)
     widget_name = bpy.props.StringProperty(name="Widget",description="Widget to use for bone display",default=WIDGET_CUBE)
     scale = bpy.props.FloatProperty(name="Scale",default=.15)
     lock_rotation = bpy.props.BoolProperty(name="Lock Rotation",default=False)
-    name = bpy.props.StringProperty(name="Name",description="Name of the newly bone",default="")
+    name = bpy.props.StringProperty(name="Name",description="Name of the newly created bones",default="")
     presuffix = bpy.props.StringProperty(name="Presuffix",description="Presuffix of the newly created bones",default="")
 
     @classmethod
@@ -322,27 +322,22 @@ class CreateTarget(bpy.types.Operator):
         ob = bpy.context.object
         previous_mode = ob.mode
         
-        bones_with_target = set()
-#        bepuik_bones = set()
+        bones_with_controls = set()
         new_bone_targets = []
         
         if ob.mode != 'POSE':
             bpy.ops.object.mode_set(mode='POSE')
-            
-#        for pchan in bpy.context.selected_pose_bones:
-#            if pchan.use_bepuik:
-#                bepuik_bones.add(pchan.name)
-        
+                    
         if self.head_tail == 1.0:
             default_presuffix = "tail"
             for pchan in bpy.context.selected_pose_bones:
-                if pchan_get_any_tail_target(ob,pchan):
-                    bones_with_target.add(pchan.name)   
+                if phcan_get_any_tail_control(ob,pchan):
+                    bones_with_controls.add(pchan.name)   
         elif self.head_tail == 0.0:
             default_presuffix = "head"
             for pchan in bpy.context.selected_pose_bones:
-                if pchan_get_any_head_target(ob,pchan):
-                    bones_with_target.add(pchan.name)
+                if phcan_get_any_head_control(ob,pchan):
+                    bones_with_controls.add(pchan.name)
         else:
             default_presuffix = "mid"
             
@@ -380,7 +375,7 @@ class CreateTarget(bpy.types.Operator):
                 
             new_bone_name = "%s%s%s" % (base_name,presuffix,suffix)
                 
-            if is_unique_bone_name(ob, new_bone_name) and ebone.name not in bones_with_target:
+            if is_unique_bone_name(ob, new_bone_name) and ebone.name not in bones_with_controls:
                 new_bone_targets.append((ebone.name,new_bone_name))
                 riggenerator.rig_point_puller(metabones, new_bone_name, pulledmetabone=pulledmetabone, parent=root, headtotail=self.head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation)
         
