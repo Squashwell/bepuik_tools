@@ -1257,8 +1257,7 @@ def rig_full_body(meta_armature_obj,op=None):
     
              
     hips_down_mat = hips.matrix() * Matrix.Rotation(math.pi,4,'Z')
-    legcone_mat = hips_down_mat * Matrix.Rotation(math.pi/4,4,'X')
-    measurement_axis_mat = hips_down_mat * Matrix.Rotation(math.pi/2,4,'X')
+    hips_forward_mat = hips_down_mat * Matrix.Rotation(math.pi/2,4,'X')
     
     up = Vector((0,0,1))
     forward = Vector((0,-1,0))
@@ -1266,10 +1265,10 @@ def rig_full_body(meta_armature_obj,op=None):
     def rig_side(suffixletter):
         if suffixletter=="L":
             relative_x_axis = 'X'
-            legcone_rot_mat = Matrix.Rotation(math.pi/5,4,'Z')
+            measurement_axis_mat = hips_forward_mat * Matrix.Rotation(math.pi/5,4,'Z')
         else:
             relative_x_axis = 'NEGATIVE_X'
-            legcone_rot_mat = Matrix.Rotation(-math.pi/5,4,'Z')
+            measurement_axis_mat = hips_forward_mat * Matrix.Rotation(-math.pi/5,4,'Z')
         
         loleg = mbs["loleg.%s" % suffixletter]
         upleg = mbs["upleg.%s" % suffixletter]
@@ -1490,9 +1489,8 @@ def rig_full_body(meta_armature_obj,op=None):
                                
         rig_foot()
 
-        legcone = mbs.new_bone("MCH-legcone.%s" % suffixletter,transform=legcone_mat * legcone_rot_mat)
-        measure = mbs.new_bone("MCH-legtwistmeasureaxis.%s" % suffixletter,transform=measurement_axis_mat * legcone_rot_mat)
-        rig_hips_to_upleg(hips, upleg, hips, measure, legcone)
+        measure = mbs.new_bone("MCH-legtwistmeasureaxis.%s" % suffixletter,transform=measurement_axis_mat)
+        rig_hips_to_upleg(hips, upleg, hips, measure, relative_x_axis)
 
 
 
@@ -1566,11 +1564,9 @@ def flag_bone_mechanical(mechanical_bone):
     if not mechanical_bone.name.startswith("MCH-"):
         mechanical_bone.name = "MCH-%s" % mechanical_bone.name
    
-def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,legcone):
+def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,relative_x_axis):
     flag_bone_mechanical(measurement_axis)
     measurement_axis.parent = hips
-    flag_bone_mechanical(legcone)
-    legcone.parent = hips
     
     upleg.use_deform = True
     upleg.parent = upleg_parent
@@ -1589,10 +1585,23 @@ def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,legcone):
         c = hips.new_meta_blender_constraint('BEPUIK_BALL_SOCKET_JOINT',upleg)
         c.anchor = upleg, 0
 
+    #prevent leg from going too far up
     c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
-    c.axis_a = legcone, 'Y'
+    c.axis_a = hips, 'NEGATIVE_Y'
     c.axis_b = upleg, 'Y'
-    c.max_swing = max(47,degrees_between(upleg, legcone) + 2)
+    c.max_swing = 120
+    
+    #prevent leg from going too far back
+    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
+    c.axis_a = hips, 'Z'
+    c.axis_b = upleg, 'Y'
+    c.max_swing = 110
+    
+    #prevent leg from going too far to the opposite side
+    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
+    c.axis_a = hips, relative_x_axis
+    c.axis_b = upleg, 'Y'
+    c.max_swing = 110
 
 def rig_bone_to_bone_revolute_swing_center(fa,fb,swing_center,swing_angle_max,swing_angle_min):
     c = fa.new_meta_blender_constraint('BEPUIK_REVOLUTE_JOINT',fb)
