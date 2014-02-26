@@ -1742,10 +1742,12 @@ def rig_leg(upleg,loleg,foot,foottarget,relative_x_axis='X'):
     
     antiparallel_limiter(upleg, loleg)
 
+    
     c = upleg.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',loleg)
     c.axis_a = upleg, 'NEGATIVE_Z'
     c.axis_b = loleg,'Y'
-    c.max_swing = max(degrees_between(loleg,-upleg.z_axis()),90)
+    #the 85 here helps prevent knee locking
+    c.max_swing = max(degrees_between(loleg,-upleg.z_axis()),85)
     
     loleg.parent = upleg
     
