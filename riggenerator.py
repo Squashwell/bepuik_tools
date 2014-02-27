@@ -1047,7 +1047,7 @@ def rig_twist_limit(a,b,twist):
     
 def rig_swing_limit(a,b,swing):
     c = a.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',b)
-    c.axis_a = a, 'Y'
+    c.axis_a = b, 'Y'
     c.axis_b = b, 'Y'
     c.max_swing = swing
     
@@ -1082,40 +1082,31 @@ def rig_spine(hips,spine,chest,neck,head,ribsl,ribsr):
     neck.bbone_segments = 7
     
     hips.bepuik_rotational_heaviness = 20
-#    chest.segments = 32
-#    chest.bbone_in = 2
-#    chest.bbone_out = 0
     
     spine.bbone_segments = 8
     spine.bbone_in = 1
     spine.bbone_out = 1
     spine.bepuik_rotational_heaviness = 40
     
-    
-#    def spine_constraints(a,b,twist=20,swing=30):        
-#        c = a.new_meta_blender_constraint('BEPUIK_TWIST_LIMIT',b)
-#        c.axis_a = a, 'Y'
-#        c.axis_b = b, 'Y'
-#        c.measurement_axis_a = a, 'Z'
-#        c.measurement_axis_b = a, 'Z'
-#        c.max_twist = twist
-#        
-#        c = a.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',b)
-#        c.axis_a = b, 'Y'
-#        c.axis_b = b, 'Y'
-#        c.max_swing = swing
-#
-#    spine_constraints(hips,spine,swing=45)
-#    spine_constraints(spine,chest,swing=45)
-#    spine_constraints(chest,neck)
-#    spine_constraints(neck,head,swing=80)
-    
     rig_twist_limit(hips, chest, twist=45)
     rig_twist_limit(chest, head, twist=100)
     
     rig_swing_limit(hips, spine, 45)
     rig_swing_limit(spine, chest, 45)
-    rig_swing_limit(chest, neck, 60)
+    rig_swing_limit(chest, neck, 40)
+    
+    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
+    c.axis_a = neck, 'Z'
+    c.axis_b = neck, 'Y'
+    c.max_swing = 100
+    
+    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
+    c.axis_a = neck, 'X'
+    c.axis_b = neck, 'X'
+    c.max_swing = 10
+    
+    neck.bepuik_rotational_heaviness = 20
+    
     rig_swing_limit(neck, head, 80)
     
     rig_twist_joint(hips, spine)
