@@ -26,22 +26,9 @@
 #======================= END GPL LICENSE BLOCK ========================
 from bepuik_tools.riggenerator import WIDGET_CUBE
 
-"""
-TODO: wiki: Peripheral bones are: bones which are not controlled and have no controlled descendants
+#TODO: wiki: Peripheral bones are: bones which are not controlled and have no controlled descendants
 
-TODO: maya/max keymaps?
-
-
-Best practice: high solver length followed by minimum amount of solver quality required to get the job done
-targets rigidity should be minimum amount to get the job done as well.
-solve length: 60
-solver quality: 1
-fixer: 0 (fixer iterations are almost unneeded now, leaving the option in for rare cases when it might be useful)
-subiterations: 10
-
-Target Head Position Rigidity: 1.0
-Target Orientation Rigidity: 0.01
-"""
+#TODO: maya/max keymaps?
 
 import os
 import sys
