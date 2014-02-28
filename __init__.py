@@ -28,8 +28,6 @@ from bepuik_tools.riggenerator import WIDGET_CUBE
 
 #TODO: wiki: Peripheral bones are: bones which are not controlled and have no controlled descendants
 
-#TODO: maya/max keymaps?
-
 import os
 import sys
 import bpy
