@@ -459,8 +459,11 @@ class MetaBone():
 
         ebone.align_roll(self.align_roll)
         
+        #create editbone selects the tail, but we dont want that
+        ebone.select_tail = False
+        
         return ebone
-                
+    
     def apply_data_to_pchan(self,pchan):
         for attr in MetaBone.pchan_attrs.keys():
             safesetattr(pchan,attr,getattr(self,attr))
