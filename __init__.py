@@ -68,7 +68,7 @@ class BEPUikAutoRigLayers(bpy.types.Panel):
 
     @classmethod
     def poll(cls,context):
-        return context.object and context.object.type == 'ARMATURE' and context.object.bepuik_autorig.is_auto_rig
+        return context.object and context.object.type == 'ARMATURE'
 
     def draw(self,context):
         riggenerator.draw_rig_layers(self.layout)
