@@ -1589,7 +1589,7 @@ def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,relative_x_axis):
     c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
     c.axis_a = hips, 'Z'
     c.axis_b = upleg, 'Y'
-    c.max_swing = 110
+    c.max_swing = 130
     
     #prevent leg from going too far to the opposite side
     c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
