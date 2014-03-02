@@ -188,9 +188,8 @@ OB_LAYERS_WIDGET = [False if i < 19 else True for i in range(20)]
 def apply_rig_starting_layers(obj):
     obj.data.layers = [True if i in AL_START else False for i in range(32)]
 
-def draw_rig_layers(layout):
-    data = bpy.context.object.data
-    
+def layout_rig_layers(layout,ob):
+    data = ob.data
     
     box1 = layout.box()
     box1.label("Animation Bones")
@@ -227,6 +226,9 @@ def draw_rig_layers(layout):
     col.prop(data,'layers',toggle=True,index=AL_DEFORMER,text="Deformers")
     col.prop(data,'layers',toggle=True,index=AL_MECHANICAL,text="Mechanical")
     col.prop(data,'layers',toggle=True,index=AL_BEPUIK_BONE,text="BEPUik Bones")
+    
+    layout.prop(ob,"show_x_ray")
+    layout.prop(data,"show_bepuik_controls")
 
 def split_suffix(s):
     possible_suffix = s[-2:]

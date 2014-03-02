@@ -68,13 +68,16 @@ class BEPUikAutoRigLayers(bpy.types.Panel):
 
     @classmethod
     def poll(cls,context):
-        return context.object and context.object.type == 'ARMATURE'
+        return context.object and (context.object.type == 'ARMATURE' or context.object.find_armature())
 
     def draw(self,context):
-        riggenerator.draw_rig_layers(self.layout)
-        self.layout.prop(bpy.context.object,"show_x_ray")
-        self.layout.prop(bpy.context.object.data,"show_bepuik_controls")
-
+        if context.object.type == 'ARMATURE':
+            ob = context.object
+        else:
+            ob = context.object.find_armature()
+        
+        riggenerator.layout_rig_layers(self.layout,ob)
+        
 class BEPUikTools(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
