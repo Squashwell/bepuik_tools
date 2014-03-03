@@ -26,6 +26,7 @@
 #======================= END GPL LICENSE BLOCK ========================
 from bepuik_tools.riggenerator import WIDGET_CUBE
 
+#TODO: perhaps pivoting tools should also select the bones in question for easier movement
 #TODO: wiki: Peripheral bones are: bones which are not controlled and have no controlled descendants
 
 import os
@@ -61,10 +62,118 @@ bl_info = {
     "description": "Automatically create humanoid BEPUik rigs and other rigging knickknacks.",
     "category": "Rigging" }
 
+
+
+class BEPUikAutoRigOperator():
+    bl_options = {'REGISTER','UNDO'}
+    
+    @classmethod
+    def poll(cls,context):
+        return context.object and (context.object.type == 'ARMATURE' or context.object.find_armature())
+    
+    def get_armature_ob(self,context):
+        if context.object.type == 'ARMATURE':
+            return context.object
+        else:
+            return context.object.find_armature()        
+
+def get_toes(pchans,suffix):
+    toes = []
+    for pchan in pchans:
+        if pchan.name.startswith("toe") and pchan.name.endswith(suffix):
+            toes.append(pchan)
+            
+    return toes     
+
+def get_bone(pchans,name,suffix):
+    bone_name = "%s%s" % (name, suffix)
+    
+    if bone_name in pchans:
+        return pchans[bone_name]
+    
+    return None
+        
+def clear_pchan_control_rigidities(pchan):
+    for constraint in pchan.constraints:
+        if constraint.type == 'BEPUIK_CONTROL':
+            constraint.bepuik_rigidity = 0
+            constraint.orientation_rigidity = 0
+            constraint.use_hard_rigidity = 0        
+    
+class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
+    bl_idname = "bepuik_tools.autorig_pivot_heel"
+    bl_label = "Pivot Heel"
+    bl_description = "Setup the pose so the foot pivots on the heel"
+    
+    suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default="L")
+    
+    def execute(self,context):
+        ob = self.get_armature_ob(context)
+        
+        pchans = ob.pose.bones
+        
+        foot = get_bone(pchans,"foot",self.suffix)
+        foot_target = get_bone(pchans,"foot-target",self.suffix)
+        toes = get_toes(pchans,self.suffix)
+        
+        if foot and foot_target and toes:
+            pass
+        else:
+            return {'CANCELLED'}
+        
+        clear_pchan_control_rigidities(foot)
+        
+        for toe in toes:
+            clear_pchan_control_rigidities(toe)
+            
+        for constraint in foot.constraints:
+            if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == foot_target.name:
+                constraint.use_hard_rigidity = True
+            
+        return {'FINISHED'}
+            
+class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
+    bl_idname = "bepuik_tools.autorig_pivot_toes"
+    bl_label = "Pivot Toes"
+    bl_description = "Setup the pose so the foot pivots on the toes"
+    
+    suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default="L")
+    
+    def execute(self,context):
+        ob = self.get_armature_ob(context)
+        
+        pchans = ob.pose.bones
+        
+        foot = get_bone(pchans,"foot",self.suffix)
+        toes_target = get_bone(pchans,"toes-target",self.suffix)
+        foot_ball_target = get_bone(pchans,"foot-ball-target",self.suffix)
+        toes = get_toes(pchans,self.suffix)
+        
+        if foot and foot_ball_target and toes_target and toes:
+            pass
+        else:
+            return {'CANCELLED'}
+        
+        clear_pchan_control_rigidities(foot)
+        
+        for toe in toes:
+            clear_pchan_control_rigidities(toe)
+            
+        for constraint in foot.constraints:
+            if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == foot_ball_target.name:
+                constraint.orientation_rigidity = 1
+                
+        for toe in toes:
+            for constraint in toe.constraints:
+                if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == toes_target.name:
+                    constraint.use_hard_rigidity = True
+            
+        return {'FINISHED'}
+
 class BEPUikAutoRigLayers(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_label = "BEPUik Auto Rig Layers"    
+    bl_label = "BEPUik Auto Rig"    
 
     @classmethod
     def poll(cls,context):
@@ -76,8 +185,25 @@ class BEPUikAutoRigLayers(bpy.types.Panel):
         else:
             ob = context.object.find_armature()
         
-        riggenerator.layout_rig_layers(self.layout,ob)
+        layout = self.layout
         
+        middle = layout.row()
+        
+        col = middle.column(align=True)
+        col.label("Left")
+        col.operator(BEPUikAutoRigPivotHeel.bl_idname).suffix = ".L"
+        col.operator(BEPUikAutoRigPivotToes.bl_idname).suffix = ".L"
+    
+        col = middle.column(align=True)
+        col.label("Right")
+        col.operator(BEPUikAutoRigPivotHeel.bl_idname).suffix = ".R"
+        col.operator(BEPUikAutoRigPivotToes.bl_idname).suffix = ".R"
+        
+        riggenerator.layout_rig_layers(self.layout,ob)
+
+
+
+            
 class BEPUikTools(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
