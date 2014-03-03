@@ -141,7 +141,7 @@ class BEPUikTools(bpy.types.Panel):
 
 class CreateFullBodyMetaArmature(bpy.types.Operator):
     '''Create Full Body Meta Armature'''
-    bl_idname = "bepuik.create_full_body_meta_armature"
+    bl_idname = "bepuik_tools.create_full_body_meta_armature"
     bl_label = "Create Full Body Meta Armature"
     bl_description = "Creates the meta bones which define the basic parameters of a full body rig"
     bl_options = {'REGISTER','UNDO'}
@@ -208,7 +208,7 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
 
 class CreateFullBodyRig(bpy.types.Operator):
     '''Create Full Body Rig'''
-    bl_idname = "bepuik.rig_full_body"
+    bl_idname = "bepuik_tools.rig_full_body"
     bl_label = "Create Full Body Rig"
     bl_description = "Creates a rig from a meta armature"
     bl_options = {'REGISTER','UNDO'}
@@ -284,7 +284,7 @@ def is_unique_bone_name(ob,bone_name):
     
 class CreateControl(bpy.types.Operator):
     '''Create Control'''
-    bl_idname = "bepuik.create_control"
+    bl_idname = "bepuik_tools.create_control"
     bl_label = "Create Control"
     bl_description = "Create a control and target bone for the currently selected bepuik bones"
     bl_options = {'REGISTER','UNDO'}
@@ -384,7 +384,7 @@ class CreateControl(bpy.types.Operator):
 
 class CreateTwistChain(bpy.types.Operator):
     '''Create Twist Chain'''
-    bl_idname = "bepuik.create_twist_chain"
+    bl_idname = "bepuik_tools.create_twist_chain"
     bl_label = "Create Twist Chain"
     bl_description = "Creates a series of bones from one bone tail to a bone head that twist gradually from the start and end bone"
     bl_options = {'REGISTER','UNDO'}
@@ -508,7 +508,7 @@ def create_and_apply_rig(scene):
             
 class BEPUikShowDebugMatrix(bpy.types.Operator):
     '''BEPUikShowDebugMatrix'''
-    bl_idname = "bepuik.show_debug_matrix"
+    bl_idname = "bepuik_tools.show_debug_matrix"
     bl_label = "Debug Matrix"
     bl_description = "Debug Matrix"
     
@@ -529,7 +529,7 @@ class BEPUikShowDebugMatrix(bpy.types.Operator):
 
 class BEPUikTest(bpy.types.Operator):
     '''BEPUikTest'''
-    bl_idname = "bepuik.test"
+    bl_idname = "bepuik_tools.test"
     bl_label = "BEPUikTest"
     bl_description = "BEPUikTest"
     
