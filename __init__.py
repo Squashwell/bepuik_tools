@@ -26,7 +26,6 @@
 #======================= END GPL LICENSE BLOCK ========================
 from bepuik_tools.riggenerator import WIDGET_CUBE
 
-#TODO: perhaps pivoting tools should also select the bones in question for easier movement
 #TODO: wiki: Peripheral bones are: bones which are not controlled and have no controlled descendants
 
 import os
@@ -99,7 +98,16 @@ def clear_pchan_control_rigidities(pchan):
             constraint.bepuik_rigidity = 0
             constraint.orientation_rigidity = 0
             constraint.use_hard_rigidity = 0        
+
+def clear_rigidities_and_selection(pchans,foot,toes):
+    clear_pchan_control_rigidities(foot)
     
+    for toe in toes:
+        clear_pchan_control_rigidities(toe)
+        
+    for pchan in pchans:
+        pchan.bone.select = False
+  
 class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_idname = "bepuik_tools.autorig_pivot_heel"
     bl_label = "Pivot Heel"
@@ -121,14 +129,13 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
         else:
             return {'CANCELLED'}
         
-        clear_pchan_control_rigidities(foot)
-        
-        for toe in toes:
-            clear_pchan_control_rigidities(toe)
+        clear_rigidities_and_selection(pchans, foot, toes)
             
         for constraint in foot.constraints:
             if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == foot_target.name:
                 constraint.use_hard_rigidity = True
+                
+        foot_target.bone.select = True
             
         return {'FINISHED'}
             
@@ -154,10 +161,7 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
         else:
             return {'CANCELLED'}
         
-        clear_pchan_control_rigidities(foot)
-        
-        for toe in toes:
-            clear_pchan_control_rigidities(toe)
+        clear_rigidities_and_selection(pchans, foot, toes)
             
         for constraint in foot.constraints:
             if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == foot_ball_target.name:
@@ -167,6 +171,8 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
             for constraint in toe.constraints:
                 if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == toes_target.name:
                     constraint.use_hard_rigidity = True
+                    
+        foot_ball_target.bone.select = True
             
         return {'FINISHED'}
 
