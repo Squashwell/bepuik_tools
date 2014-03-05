@@ -376,7 +376,6 @@ class MetaBone():
                     'envelope_distance':None}
 
     pchan_attrs = { 'use_bepuik':False,
-                    'use_bepuik_always_solve':False,
                     'bepuik_ball_socket_rigidity':0,
                     'bepuik_rotational_heaviness':2.5,
                     'lock_location':(False,False,False),
