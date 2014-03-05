@@ -79,10 +79,12 @@ class BEPUikAutoRigOperator():
         else:
             return context.object.find_armature()        
 
+import re
 def get_toes(pchans,suffix):
+    p = re.compile(r"toe[0-9]+-[0-9]+")
     toes = []
     for pchan in pchans:
-        if pchan.name.startswith("toe") and pchan.name.endswith(suffix):
+        if pchan.name.endswith(suffix) and p.match(pchan.name):
             toes.append(pchan)
             
     return toes     
@@ -110,7 +112,12 @@ def clear_rigidities_and_selection(pchans,foot,toes):
         
     for pchan in pchans:
         pchan.bone.select = False
-  
+
+def find_control_with_target(pchan,target_name):
+    for constraint in pchan.constraints:
+        if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == target_name:
+            return constraint 
+ 
 class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_idname = "bepuik_tools.autorig_pivot_heel"
     bl_label = "Pivot Heel"
@@ -133,15 +140,22 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
             return {'CANCELLED'}
         
         clear_rigidities_and_selection(pchans, foot, toes)
-            
-        for constraint in foot.constraints:
-            if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == foot_target.name:
-                constraint.bepuik_rigidity = 1.0
-                constraint.orientation_rigidity = 1.0
-                
+        
+        constraint = find_control_with_target(foot, foot_target.name)
+        constraint.bepuik_rigidity = 1.0
+        constraint.orientation_rigidity = 1.0  
                                
         foot_target.bone.select = True
+        
+        floor_target = get_bone(pchans,"foot-floor-target",self.suffix)
+        
+        if floor_target:
+            floor = get_bone(pchans,"floor",self.suffix)
             
+            if floor:
+                constraint = find_control_with_target(floor, floor_target.name)
+                constraint.use_hard_rigidity = True
+        
         return {'FINISHED'}
             
 class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
@@ -167,19 +181,25 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
             return {'CANCELLED'}
         
         clear_rigidities_and_selection(pchans, foot, toes)
-            
-        for constraint in foot.constraints:
-            if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == foot_ball_target.name:
-                constraint.orientation_rigidity = 1
+        
+        constraint = find_control_with_target(foot, foot_ball_target.name)
+        constraint.orientation_rigidity = 1
                 
         for toe in toes:
-            for constraint in toe.constraints:
-                if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == toes_target.name:
-                    constraint.bepuik_rigidity = 100
-                    constraint.orientation_rigidity = 10
-                    
+            constraint = find_control_with_target(toe, toes_target.name)
+            constraint.bepuik_rigidity = 10
+            constraint.orientation_rigidity = 1
+        
         foot_ball_target.bone.select = True
+        
+        floor_target = get_bone(pchans,"foot-floor-target",self.suffix)
+        if floor_target:
+            floor = get_bone(pchans,"floor",self.suffix)
             
+            if floor:
+                constraint = find_control_with_target(floor, floor_target.name)
+                constraint.use_hard_rigidity = True
+        
         return {'FINISHED'}
 
 class BEPUikAutoRigLayers(bpy.types.Panel):
