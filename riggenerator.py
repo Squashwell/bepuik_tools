@@ -1035,11 +1035,12 @@ def degrees_between(a,b):
         
     return math.degrees(math.acos(max(min(a.dot(b),1),-1))) 
 
-def rig_target_affected(target,affected,headtotail=0,position_rigidity=2,orientation_rigidity=.1):
+def rig_target_affected(target,affected,headtotail=0,position_rigidity=0,orientation_rigidity=0,hard_rigidity=False):
     metaconstraint = affected.new_meta_blender_constraint('BEPUIK_CONTROL',target,target.name)
     metaconstraint.connection_b = target
     metaconstraint.orientation_rigidity = orientation_rigidity
     metaconstraint.bepuik_rigidity = position_rigidity
+    metaconstraint.use_hard_rigidity = hard_rigidity
     metaconstraint.pulled_point = (0,headtotail,0)
     target.show_wire = True
     target.lock_scale = (True,True,True)
@@ -1381,7 +1382,7 @@ def rig_full_body(meta_armature_obj,op=None):
             hand_target.custom_shape = widget_get(hand_target_custom_shape_name)
             hand_target.show_wire = True
             
-            rig_target_affected(hand_target, hand)
+            rig_target_affected(hand_target, hand,position_rigidity=1,orientation_rigidity=1)
             
             s1_swings = [0,0,0,3,3]
         
@@ -1482,8 +1483,7 @@ def rig_full_body(meta_armature_obj,op=None):
             floor_target.custom_shape = widget_get("%s.%s" % (WIDGET_FLOOR_TARGET,suffixletter))
             floor_target.show_wire = True
             
-            c = rig_target_affected(floor_target, floor, headtotail=0, position_rigidity=0, orientation_rigidity=0)
-            c.use_hard_rigidity = True
+            c = rig_target_affected(floor_target, floor)
             
             #floor affect ball of the foot
             c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',foot)
@@ -1540,7 +1540,7 @@ def rig_full_body(meta_armature_obj,op=None):
                 s1.parent = foot
             
             for multitarget_segment in multitarget_segments:
-                rig_target_affected(toes_target, multitarget_segment, headtotail=0, position_rigidity=0, orientation_rigidity=0)
+                rig_target_affected(toes_target, multitarget_segment)
         
             rig_point_puller(mbs, "foot-ball-target.%s" % suffixletter, foot, root, headtotail=1.0)
             
@@ -1623,7 +1623,7 @@ def rig_point_puller(metabonegroup,name,pulledmetabone,parent,scale=.10,headtota
         pullermetabone.lock_rotation = (True,True,True)
         pullermetabone.lock_rotation_4d = True
     
-    rig_target_affected(pullermetabone, pulledmetabone, headtotail=0, position_rigidity=0, orientation_rigidity=0)
+    rig_target_affected(pullermetabone, pulledmetabone)
     
     return pullermetabone
     
@@ -1852,7 +1852,7 @@ def rig_leg(upleg,loleg,foot,foottarget,relative_x_axis='X'):
     
     foot.parent = loleg
     
-    rig_target_affected(foottarget, foot)
+    rig_target_affected(foottarget, foot, position_rigidity=1.0, orientation_rigidity=1.0)
     
     
       
