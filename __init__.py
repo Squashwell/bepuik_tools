@@ -36,7 +36,7 @@ from bpy.app.handlers import persistent
 import bgl
 import blf
 
-debug_path = "%s/2.69/scripts/addons/bepuik_tools/pydev_debug.py" % os.path.dirname(bpy.app.binary_path)
+debug_path = "%s/release/scripts/addons/bepuik_tools/pydev_debug.py" % os.path.dirname(bpy.app.binary_path)
 if os.path.exists(debug_path):
     print("BEPUik: attempting to run pydev debug...")
     from bepuik_tools import pydev_debug
