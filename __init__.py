@@ -136,8 +136,10 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
             
         for constraint in foot.constraints:
             if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == foot_target.name:
-                constraint.use_hard_rigidity = True
+                constraint.bepuik_rigidity = 1.0
+                constraint.orientation_rigidity = 1.0
                 
+                               
         foot_target.bone.select = True
             
         return {'FINISHED'}
@@ -173,7 +175,8 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
         for toe in toes:
             for constraint in toe.constraints:
                 if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == toes_target.name:
-                    constraint.use_hard_rigidity = True
+                    constraint.bepuik_rigidity = 100
+                    constraint.orientation_rigidity = 10
                     
         foot_ball_target.bone.select = True
             
