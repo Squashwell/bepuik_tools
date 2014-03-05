@@ -1451,6 +1451,13 @@ def rig_full_body(meta_armature_obj,op=None):
             final_segments = get_final_segments("toe")
             final_segments_tail_average = sum_vectors([metabone.tail for metabone in final_segments])/len(final_segments)
             
+            heel = mbs.new_bone("MCH-heel.%s" % suffixletter)
+            heel.head = foot.head.copy()
+            heel.tail = foot_target.head.copy()
+            flag_bone_mechanical(heel)
+            heel.align_roll = Vector((0,-1,0))
+            heel.parent = foot
+            
             foot_target_custom_shape_name = "%s-target.%s" % (WIDGET_FOOT,suffixletter)
             custom_widget_data[foot_target_custom_shape_name] = widgetdata_pad(width=foot_width_world / foot_target.length(),length=1.0,mid=.3)
             foot_target.show_wire = True
@@ -1496,7 +1503,7 @@ def rig_full_body(meta_armature_obj,op=None):
             c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',foot)
             c.line_anchor = floor, 0
             c.line_direction = floor, 'Z'
-            c.anchor_b = foot_target, 0
+            c.anchor_b = heel, 1
             c.max_distance = 999999
             
             def tail_affected_by_floor(segment):
