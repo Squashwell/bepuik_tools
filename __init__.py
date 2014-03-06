@@ -116,7 +116,9 @@ def clear_rigidities_and_selection(pchans,foot,toes):
 def find_control_with_target(pchan,target_name):
     for constraint in pchan.constraints:
         if constraint.type == 'BEPUIK_CONTROL' and constraint.connection_subtarget == target_name:
-            return constraint 
+            return constraint
+        
+    return None 
  
 class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_idname = "bepuik_tools.autorig_pivot_heel"
@@ -187,8 +189,9 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
                 
         for toe in toes:
             constraint = find_control_with_target(toe, toes_target.name)
-            constraint.bepuik_rigidity = 10
-            constraint.orientation_rigidity = 1
+            if constraint:
+                constraint.bepuik_rigidity = 10
+                constraint.orientation_rigidity = 1
         
         foot_ball_target.bone.select = True
         
