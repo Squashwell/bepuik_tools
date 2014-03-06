@@ -1159,27 +1159,33 @@ w.faces = []
 
 w = WIDGET_DATA_DEFAULTS[WIDGET_CIRCLE] = widgetdata_circle(1)
 
-w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L] = WidgetData()
-w.vertices = [(-2,0,0),(-2,1,0),(-1,2,0),(.25,2,0),(.25,-2,0),(-1,-2,0),(-2,-1,0)]
-w.edges = [(0,1),(1,2),(2,3),(3,4),(4,5),(5,6),(6,0)]
-w.faces = []
 
-w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_R] = WidgetData()
-w.vertices = [(t[0]*-1,t[1],t[2]) for t in WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].vertices]
-w.edges = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].edges[:]
-w.faces = []
-
-w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_TARGET_L] = WidgetData()
-w.vertices = [(v[0],v[1]*1.3,v[2]) for v in WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].vertices]
-w.edges = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].edges[:]
-w.faces = []
-w.subsurface_levels = 2
-
-w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_TARGET_R] = WidgetData()
-w.vertices = [(v[0]*1.1,v[1]*1.3,v[2]) for v in WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_R].vertices]
-w.edges = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_R].edges[:]
-w.faces = []
-w.subsurface_levels = 2
+#w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR] = WidgetData()
+#w.vertices = [(-1,-.25,0),(-1,1,0),(1,1,0),(1,-.25,0)]
+#w.edges = [(0,1),(1,2),(2,3),(3,0)]
+#w.faces = []
+#
+#w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L] = WidgetData()
+#w.vertices = [(-2,0,0),(-2,1,0),(-1,2,0),(.25,2,0),(.25,-2,0),(-1,-2,0),(-2,-1,0)]
+#w.edges = [(0,1),(1,2),(2,3),(3,4),(4,5),(5,6),(6,0)]
+#w.faces = []
+#
+#w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_R] = WidgetData()
+#w.vertices = [(t[0]*-1,t[1],t[2]) for t in WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].vertices]
+#w.edges = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].edges[:]
+#w.faces = []
+#
+#w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_TARGET_L] = WidgetData()
+#w.vertices = [(v[0],v[1]*1.3,v[2]) for v in WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].vertices]
+#w.edges = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_L].edges[:]
+#w.faces = []
+#w.subsurface_levels = 2
+#
+#w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_TARGET_R] = WidgetData()
+#w.vertices = [(v[0]*1.1,v[1]*1.3,v[2]) for v in WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_R].vertices]
+#w.edges = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR_R].edges[:]
+#w.faces = []
+#w.subsurface_levels = 2
 
 
 def widgetdata_refresh_defaults():
@@ -1451,12 +1457,12 @@ def rig_full_body(meta_armature_obj,op=None):
             final_segments = get_final_segments("toe")
             final_segments_tail_average = sum_vectors([metabone.tail for metabone in final_segments])/len(final_segments)
             
-            heel = mbs.new_bone("MCH-heel.%s" % suffixletter)
-            heel.head = foot.head.copy()
-            heel.tail = foot_target.head.copy()
-            flag_bone_mechanical(heel)
-            heel.align_roll = Vector((0,-1,0))
-            heel.parent = foot
+#            heel = mbs.new_bone("MCH-heel.%s" % suffixletter)
+#            heel.head = foot.head.copy()
+#            heel.tail = foot_target.head.copy()
+#            flag_bone_mechanical(heel)
+#            heel.align_roll = Vector((0,-1,0))
+#            heel.parent = foot
             
             foot_target_custom_shape_name = "%s-target.%s" % (WIDGET_FOOT,suffixletter)
             custom_widget_data[foot_target_custom_shape_name] = widgetdata_pad(width=foot_width_world / foot_target.length(),length=1.0,mid=.3)
@@ -1476,42 +1482,42 @@ def rig_full_body(meta_armature_obj,op=None):
             toes_target.show_wire = True
             toes_target.custom_shape = widget_get(toes_target_custom_shape_name)
             
-            floor = mbs.new_bone("floor.%s" % suffixletter)
-            floor.head = foot_target.head.copy()
-            floor.tail = foot_target.tail.copy()
-            floor.parent = root
-            floor.custom_shape = widget_get("%s.%s" % (WIDGET_FLOOR,suffixletter))
-            floor.use_bepuik = True
+#            floor = mbs.new_bone("floor.%s" % suffixletter)
+#            floor.head = foot_target.head.copy()
+#            floor.tail = foot_target.tail.copy()
+#            floor.parent = root
+#            floor.custom_shape = widget_get(WIDGET_FLOOR)#"%s.%s" % (WIDGET_FLOOR,suffixletter))
+#            floor.use_bepuik = True
+#            
+#            floor_target = mbs.new_bone("foot-floor-target.%s" % suffixletter)
+#            floor_target.head = foot_target.head.copy()
+#            floor_target.tail = foot_target.tail.copy()
+#            floor_target.parent = root
+#            floor_target.custom_shape = widget_get(WIDGET_FLOOR)#"%s.%s" % (WIDGET_FLOOR_TARGET,suffixletter))
+#            floor_target.show_wire = True
             
-            floor_target = mbs.new_bone("foot-floor-target.%s" % suffixletter)
-            floor_target.head = foot_target.head.copy()
-            floor_target.tail = foot_target.tail.copy()
-            floor_target.parent = root
-            floor_target.custom_shape = widget_get("%s.%s" % (WIDGET_FLOOR_TARGET,suffixletter))
-            floor_target.show_wire = True
+#            c = rig_target_affected(floor_target, floor)
             
-            c = rig_target_affected(floor_target, floor)
-            
-            #floor affect ball of the foot
-            c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',foot)
-            c.line_anchor = floor, 0
-            c.line_direction = floor, 'Z'
-            c.anchor_b = foot, 1
-            c.max_distance = 999999
-            
-            #floor affect heel of the foot
-            c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',foot)
-            c.line_anchor = floor, 0
-            c.line_direction = floor, 'Z'
-            c.anchor_b = heel, 1
-            c.max_distance = 999999
-            
-            def tail_affected_by_floor(segment):
-                c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',segment)
-                c.line_anchor = floor, 0
-                c.line_direction = floor, 'Z'
-                c.anchor_b = segment, 1
-                c.max_distance = 999999
+#            #floor affect ball of the foot
+#            c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',foot)
+#            c.line_anchor = floor, 0
+#            c.line_direction = floor, 'Z'
+#            c.anchor_b = foot, 1
+#            c.max_distance = 999999
+#            
+#            #floor affect heel of the foot
+#            c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',foot)
+#            c.line_anchor = floor, 0
+#            c.line_direction = floor, 'Z'
+#            c.anchor_b = heel, 1
+#            c.max_distance = 999999
+#            
+#            def tail_affected_by_floor(segment):
+#                c = floor.new_meta_blender_constraint('BEPUIK_LINEAR_AXIS_LIMIT',segment)
+#                c.line_anchor = floor, 0
+#                c.line_direction = floor, 'Z'
+#                c.anchor_b = segment, 1
+#                c.max_distance = 999999
             
             for f in range(1,6):
                 s1 = fs(f,1)
@@ -1521,7 +1527,7 @@ def rig_full_body(meta_armature_obj,op=None):
                 if not s1:
                     continue
                 
-                tail_affected_by_floor(s1)
+#                tail_affected_by_floor(s1)
                 
                 s1.swing_x = 20
                 s1.swing_y = 45
@@ -1531,14 +1537,14 @@ def rig_full_body(meta_armature_obj,op=None):
                     s2.swing_angle_max = 0
                     s2.swing_angle_min = -90
                     
-                    tail_affected_by_floor(s2)
+#                    tail_affected_by_floor(s2)
                   
                 if s3:
                     s3.swing_center = fssc(f,3)    
                     s3.swing_angle_max = 70
                     s3.swing_angle_min = -20
                     
-                    tail_affected_by_floor(s3)
+#                    tail_affected_by_floor(s3)
                 
                 rig_twist_joint(foot, s1)
                 rig_ballsocket_joint(foot, s1)
