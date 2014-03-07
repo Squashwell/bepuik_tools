@@ -115,22 +115,23 @@ MAP_SUBSTRING_SET_TO_ARMATURELAYER[(TARGET_SUBSTRINGS,'R')] = AL_TARGET
 
 FINGER_TOE_RIGIDITY = 3
 
-WIDGET_HAND = 'Widget-Hand'
-WIDGET_SOLE = 'Widget-Sole'
-WIDGET_BONE = 'Widget-Bone'
-WIDGET_ROOT = 'Widget-Root'
-WIDGET_EYE_TARGET = 'Widget-Eye-Target'
-WIDGET_SPHERE = 'Widget-Sphere'
-WIDGET_CUBE = 'Widget-Cube'
-WIDGET_PAD = 'Widget-Pad'
-WIDGET_CIRCLE = 'Widget-Circle'
-WIDGET_FOOT = 'Widget-Foot'
-WIDGET_FLOOR = 'Widget-Floor'
-WIDGET_FLOOR_TARGET = 'Widget-Floor-Target'
-WIDGET_FLOOR_L = 'Widget-Floor.L'
-WIDGET_FLOOR_R = 'Widget-Floor.R'
-WIDGET_FLOOR_TARGET_L = 'Widget-Floor-Target.L'
-WIDGET_FLOOR_TARGET_R = 'Widget-Floor-Target.R'
+WIDGET_HAND = "Widget-Hand"
+WIDGET_SOLE = "Widget-Sole"
+WIDGET_BONE = "Widget-Bone"
+WIDGET_ROOT = "Widget-Root"
+WIDGET_EYE_TARGET = "Widget-Eye-Target"
+WIDGET_SPHERE = "Widget-Sphere"
+WIDGET_CUBE = "Widget-Cube"
+WIDGET_PAD = "Widget-Pad"
+WIDGET_CIRCLE = "Widget-Circle"
+WIDGET_FOOT = "Widget-Foot"
+WIDGET_FLOOR = "Widget-Floor"
+WIDGET_FLOOR_TARGET = "Widget-Floor-Target"
+WIDGET_FLOOR_L = "Widget-Floor.L"
+WIDGET_FLOOR_R = "Widget-Floor.R"
+WIDGET_FLOOR_TARGET_L = "Widget-Floor-Target.L"
+WIDGET_FLOOR_TARGET_R = "Widget-Floor-Target.R"
+WIDGET_TOES = "Widget-Toes"
 
 class WidgetData():
     def __init__(self,vertices=[],edges=[],faces=[]):
@@ -1374,7 +1375,7 @@ def rig_full_body(meta_armature_obj,op=None):
             custom_widget_data[hand_custom_shape_name] = widgetdata_pad(width=hand_width_local*.75,length=.75,mid=0)
             custom_widget_data[hand_custom_shape_name].subsurface_levels = 1
             
-            hand_target_custom_shape_name = "%s-target.%s" % (WIDGET_HAND,suffixletter)
+            hand_target_custom_shape_name = "%s-Target.%s" % (WIDGET_HAND,suffixletter)
             custom_widget_data[hand_target_custom_shape_name] = widgetdata_pad(width=hand_width_local*1.2,length=1.0*1.2,mid=.1)
             
             
@@ -1464,7 +1465,7 @@ def rig_full_body(meta_armature_obj,op=None):
 #            heel.align_roll = Vector((0,-1,0))
 #            heel.parent = foot
             
-            foot_target_custom_shape_name = "%s-target.%s" % (WIDGET_FOOT,suffixletter)
+            foot_target_custom_shape_name = "%s-Target.%s" % (WIDGET_FOOT,suffixletter)
             custom_widget_data[foot_target_custom_shape_name] = widgetdata_pad(width=foot_width_world / foot_target.length(),length=1.0,mid=.3)
             foot_target.show_wire = True
             foot_target.custom_shape = widget_get(foot_target_custom_shape_name)
@@ -1477,7 +1478,7 @@ def rig_full_body(meta_armature_obj,op=None):
             
             toes_width_local = foot_width_world / toes_target.length()
             
-            toes_target_custom_shape_name = "toes-target.%s" % (suffixletter)
+            toes_target_custom_shape_name = "%s-Target.%s" % (WIDGET_TOES,suffixletter)
             custom_widget_data[toes_target_custom_shape_name] = widgetdata_pad(width=toes_width_local*1.2,length=1.2,mid=.1)
             toes_target.show_wire = True
             toes_target.custom_shape = widget_get(toes_target_custom_shape_name)
