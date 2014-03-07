@@ -64,20 +64,24 @@ bl_info = {
     "description": "Automatically create humanoid BEPUik rigs and other rigging knickknacks.",
     "category": "Rigging" }
 
-
+def get_armature_ob(context):
+    if context.object:
+        if context.object.type == 'ARMATURE':
+            return context.object
+        else:
+            return context.object.find_armature()
+        
+    return None  
 
 class BEPUikAutoRigOperator():
     bl_options = {'REGISTER','UNDO'}
     
     @classmethod
     def poll(cls,context):
-        return context.object and (context.object.type == 'ARMATURE' or context.object.find_armature())
-    
-    def get_armature_ob(self,context):
-        if context.object.type == 'ARMATURE':
-            return context.object
-        else:
-            return context.object.find_armature()        
+        if get_armature_ob(context):
+            return True
+        
+        return False    
 
 import re
 def get_toes(pchans,suffix):
@@ -127,8 +131,15 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
     
     suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default="L")
     
+    @classmethod
+    def poll(cls,context):
+        if get_armature_ob(context):
+            return True
+        else:
+            return False
+    
     def execute(self,context):
-        ob = self.get_armature_ob(context)
+        ob = get_armature_ob(context)
         
         pchans = ob.pose.bones
         
@@ -168,8 +179,15 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
     
     suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default="L")
     
+    @classmethod
+    def poll(cls,context):
+        if get_armature_ob(context):
+            return True
+        else:
+            return False
+    
     def execute(self,context):
-        ob = self.get_armature_ob(context)
+        ob = get_armature_ob(context)
         
         pchans = ob.pose.bones
         
@@ -259,12 +277,19 @@ class BEPUikTools(bpy.types.Panel):
         op.lock_rotation = False
         op.scale = .1
         op.widget_name = WIDGET_CUBE
+        op.create_empties = False
         
         op = col.operator(CreateControl.bl_idname,text="Tail Position Only")
         op.head_tail = 1
         op.lock_rotation = True
         op.scale = .1
         op.widget_name = WIDGET_CUBE
+        op.create_empties = False
+        
+        op = col.operator(CreateControl.bl_idname,text="Empty")
+        op.head_tail = 0
+        op.lock_rotation = False
+        op.create_empties = True
 
                 
 #        box = self.layout.box()
@@ -443,14 +468,13 @@ def is_unique_bone_name(ob,bone_name):
             return False
         
     return True
+
     
-    
-class CreateControl(bpy.types.Operator):
+class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
     '''Create Control'''
-    bl_idname = "bepuik_tools.create_control"
-    bl_label = "Create Control"
-    bl_description = "Create a control and target bone for the currently selected bepuik bones"
-    bl_options = {'REGISTER','UNDO'}
+    bl_idname = "bepuik_tools.create_control_and_target"
+    bl_label = "Create Control and Target"
+    bl_description = "Create a control and target for each currently selected bepuik bones"
     
     head_tail = bpy.props.FloatProperty(name="Head to Tail",description="Head to tail position of the target",default=0,max=1,min=0)
     widget_name = bpy.props.StringProperty(name="Widget",description="Widget to use for bone display",default=WIDGET_CUBE)
@@ -458,11 +482,15 @@ class CreateControl(bpy.types.Operator):
     lock_rotation = bpy.props.BoolProperty(name="Lock Rotation",default=False)
     name = bpy.props.StringProperty(name="Name",description="Name of the newly created bones",default="")
     presuffix = bpy.props.StringProperty(name="Presuffix",description="Presuffix of the newly created bones",default="")
+    create_empties = bpy.props.BoolProperty(name="Create Target Empties",default=False,description="Create target empties as targets instead of target bones")
 
     @classmethod
     def poll(cls,context):
-        ob = bpy.context.object
-        return ob and ob.select and ob.type == 'ARMATURE' and ob.mode == 'POSE' and bpy.context.selected_pose_bones
+        ob = get_armature_ob(context)
+        if ob and bpy.context.selected_pose_bones:
+            return True
+        else:
+            return False
         
     def execute(self,context):
         riggenerator.widgetdata_refresh_defaults()
@@ -470,23 +498,27 @@ class CreateControl(bpy.types.Operator):
         previous_mode = ob.mode
         
         bones_with_controls = set()
-        new_bone_targets = []
+        new_targets = []
         
-        if ob.mode != 'POSE':
-            bpy.ops.object.mode_set(mode='POSE')
-                    
-        if self.head_tail == 1.0:
-            default_presuffix = "tail"
-            for pchan in bpy.context.selected_pose_bones:
-                if phcan_get_any_tail_control(ob,pchan):
-                    bones_with_controls.add(pchan.name)   
-        elif self.head_tail == 0.0:
-            default_presuffix = "head"
-            for pchan in bpy.context.selected_pose_bones:
-                if phcan_get_any_head_control(ob,pchan):
-                    bones_with_controls.add(pchan.name)
+        if self.create_empties:
+            effective_head_tail = 0
+            default_presuffix = "target"
+            prefix = "%s-" % ob.name
         else:
-            default_presuffix = "mid"
+            prefix = ""
+            effective_head_tail = self.head_tail
+            if effective_head_tail == 1.0:
+                default_presuffix = "tail"
+                for pchan in bpy.context.selected_pose_bones:
+                    if phcan_get_any_tail_control(ob,pchan):
+                        bones_with_controls.add(pchan.name)   
+            elif effective_head_tail == 0.0:
+                default_presuffix = "head"
+                for pchan in bpy.context.selected_pose_bones:
+                    if phcan_get_any_head_control(ob,pchan):
+                        bones_with_controls.add(pchan.name)
+            else:
+                default_presuffix = "mid"
             
         metabones = riggenerator.MetaBoneDict.from_ob(ob)
         
@@ -509,9 +541,13 @@ class CreateControl(bpy.types.Operator):
                 need_presuffix = True
             
             suffix = ebone.name[len(ebone.basename):]
-                
-            if not is_unique_bone_name(ob, "%s%s" % (base_name,suffix)):
-                need_presuffix = True
+            
+            if self.create_empties:
+                if ob.name in bpy.data.objects:
+                    need_presuffix = True
+            else:
+                if not is_unique_bone_name(ob, "%s%s" % (base_name,suffix)):
+                    need_presuffix = True
             
             if self.presuffix:
                 presuffix = "%s%s" % ("-",self.presuffix)
@@ -520,22 +556,38 @@ class CreateControl(bpy.types.Operator):
             else:
                 presuffix = ""
                 
-            new_bone_name = "%s%s%s" % (base_name,presuffix,suffix)
+            new_target_name = "%s%s%s%s" % (prefix,base_name,presuffix,suffix)
+        
+            if self.create_empties:
+                if new_target_name not in bpy.data.objects:
+                    new_targets.append((ebone.name,new_target_name))
+            else:
+                if is_unique_bone_name(ob, new_target_name) and ebone.name not in bones_with_controls:
+                    new_targets.append((ebone.name,new_target_name))
+                    riggenerator.rig_point_puller(metabones, new_target_name, pulledmetabone=pulledmetabone, parent=root, headtotail=effective_head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation)
+        
+        if self.create_empties:
+            for affected_bone_name, target_name in new_targets:
+                target = bpy.data.objects.new(name=target_name,object_data=None)
+                affected_bone = ob.pose.bones[affected_bone_name]
+                c = affected_bone.constraints.new(type='BEPUIK_CONTROL')
+                c.connection_target = target
+                c.name = new_target_name
+                target.matrix_world = ob.matrix_world * affected_bone.matrix.normalized()
+                bpy.context.scene.objects.link(target)  
+                target.empty_draw_type = 'ARROWS'
+                target.empty_draw_size = affected_bone.bone.length
+        else:
+            metabones.to_ob(ob)
+        
+            for affected_bone_name, target_bone_name in new_targets:
+                target_bone = ob.pose.bones[target_bone_name]
+                affected_bone = ob.pose.bones[affected_bone_name]
                 
-            if is_unique_bone_name(ob, new_bone_name) and ebone.name not in bones_with_controls:
-                new_bone_targets.append((ebone.name,new_bone_name))
-                riggenerator.rig_point_puller(metabones, new_bone_name, pulledmetabone=pulledmetabone, parent=root, headtotail=self.head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation)
-        
-        metabones.to_ob(ob)
-        
-        for affected_bone_name, target_bone_name in new_bone_targets:
-            target_bone = ob.pose.bones[target_bone_name]
-            affected_bone = ob.pose.bones[affected_bone_name]
-            
-            offset = Vector((0,affected_bone.length * self.head_tail,0))
-            
-            target_bone.matrix = affected_bone.matrix.normalized() * Matrix.Translation(offset)
-            riggenerator.organize_pchan_layer(target_bone, affected_bone_name, True)
+                offset = Vector((0,affected_bone.length * self.head_tail,0))
+                
+                target_bone.matrix = affected_bone.matrix.normalized() * Matrix.Translation(offset)
+                riggenerator.organize_pchan_layer(target_bone, affected_bone_name, True)
         
             
         if previous_mode != ob.mode:
