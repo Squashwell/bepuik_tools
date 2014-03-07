@@ -1289,6 +1289,7 @@ def rig_full_body(meta_armature_obj,op=None):
     
     rig_point_puller(mbs, "hips-target", hips, root)
     rig_point_puller(mbs, "chest-target", chest, root)
+    rig_point_puller(mbs, "spine-target", spine, root)
     rig_point_puller(mbs, "head-target", head, root)
     
              
