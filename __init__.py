@@ -561,20 +561,26 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
             if self.create_empties:
                 if new_target_name not in bpy.data.objects:
                     new_targets.append((ebone.name,new_target_name))
+                    target = bpy.data.objects.new(name=new_target_name,object_data=None)
+                    bpy.context.scene.objects.link(target)
             else:
                 if is_unique_bone_name(ob, new_target_name) and ebone.name not in bones_with_controls:
                     new_targets.append((ebone.name,new_target_name))
                     riggenerator.rig_point_puller(metabones, new_target_name, pulledmetabone=pulledmetabone, parent=root, headtotail=effective_head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation)
         
         if self.create_empties:
+            bpy.ops.object.mode_set(toggle=False,mode='POSE')
+                        
             for affected_bone_name, target_name in new_targets:
-                target = bpy.data.objects.new(name=target_name,object_data=None)
+                target = bpy.data.objects[target_name]
                 affected_bone = ob.pose.bones[affected_bone_name]
+                
                 c = affected_bone.constraints.new(type='BEPUIK_CONTROL')
                 c.connection_target = target
                 c.name = new_target_name
-                target.matrix_world = ob.matrix_world * affected_bone.matrix.normalized()
-                bpy.context.scene.objects.link(target)  
+
+                target.matrix_world = ob.matrix_world * affected_bone.matrix.normalized() 
+                 
                 target.empty_draw_type = 'ARROWS'
                 target.empty_draw_size = affected_bone.bone.length
         else:
