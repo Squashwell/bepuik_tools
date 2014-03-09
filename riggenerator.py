@@ -1848,26 +1848,23 @@ def rig_leg(upleg,loleg,foot,foottarget,relative_x_axis='X'):
     loleg.parent = upleg
     
     #loleg to foot connections
-    c = loleg.new_meta_blender_constraint('BEPUIK_TWIST_LIMIT',foot)
+    c = loleg.new_meta_blender_constraint('BEPUIK_TWIST_JOINT',foot)
     c.axis_a = foot, 'Y'
     c.axis_b = foot, 'Y'
-    c.measurement_axis_a = foot, 'Z'
-    c.measurement_axis_b = foot, 'Z'
-    c.max_twist = 30
 
     c = loleg.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',foot)
     c.axis_a = foot, 'Y'
     c.axis_b = foot, 'Y'
-    c.max_swing = 45
+    c.max_swing = 75
 
     c = loleg.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',foot)
     c.axis_a = loleg, relative_x_axis
     c.axis_b = loleg, relative_x_axis
-    c.max_swing = 22
+    c.max_swing = 45
     
     foot.parent = loleg
     
-    rig_target_affected(foottarget, foot, position_rigidity=1.0, orientation_rigidity=1.0)
+    rig_target_affected(foottarget, foot, hard_rigidity=True)
     
     
       
