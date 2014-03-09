@@ -1638,7 +1638,7 @@ def rig_point_puller(metabonegroup,name,pulledmetabone,parent,scale=.10,headtota
         pullermetabone.lock_rotation = (True,True,True)
         pullermetabone.lock_rotation_4d = True
     
-    rig_target_affected(pullermetabone, pulledmetabone)
+    rig_target_affected(pullermetabone, pulledmetabone, headtotail=headtotail)
     
     return pullermetabone
     
