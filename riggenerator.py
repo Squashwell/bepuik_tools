@@ -2022,7 +2022,7 @@ def organize_pchan_layer(pchan,bone_hint_str=None,is_bepuik_target=False):
     if pchan.use_bepuik:
         layer_indices.add(AL_BEPUIK_BONE)
     
-    if is_bepuik_target:
+    if is_bepuik_target or pchan.name.endswith("target"):
         layer_indices.add(AL_TARGET)
     
     if (pchan.rotation_mode == 'QUATERNION' or pchan.rotation_mode == 'AXIS_ANGLE') and pchan.lock_rotations_4d:
