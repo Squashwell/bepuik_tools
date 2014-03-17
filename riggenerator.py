@@ -390,6 +390,7 @@ class MetaBone():
                     'lock_location':(False,False,False),
                     'lock_rotation':(False,False,False),
                     'lock_rotation_w':False,
+                    'lock_rotations_4d':False,
                     'lock_scale':(False,False,False),
                     'custom_shape':None,
                     'rotation_mode':'QUATERNION'}
@@ -569,7 +570,7 @@ class MetaBoneDict(dict):
     
     def new_bone_by_fraction(self,name,source_metabone,start_fraction=0,end_fraction=1):
         new_bone = self.new_bone(name=name)
-        new_bone.name = "%s-%s" % (source_metabone.name,name)
+        new_bone.name = name
         start_point = source_metabone.head
         end_point = source_metabone.tail
         
@@ -1287,10 +1288,10 @@ def rig_full_body(meta_armature_obj,op=None):
 #    hips.parent = torso
     hips.parent = root
     
-    rig_point_puller(mbs, "hips-target", hips, root)
-    rig_point_puller(mbs, "chest-target", chest, root)
-    rig_point_puller(mbs, "spine-target", spine, root)
-    rig_point_puller(mbs, "head-target", head, root)
+    rig_new_target(mbs, "hips-target", hips, root)
+    rig_new_target(mbs, "chest-target", chest, root)
+    rig_new_target(mbs, "spine-target", spine, root)
+    rig_new_target(mbs, "head-target", head, root)
     
              
     hips_down_mat = hips.matrix() * Matrix.Rotation(math.pi,4,'Z')
@@ -1433,6 +1434,9 @@ def rig_full_body(meta_armature_obj,op=None):
                     s4.swing_angle_min = -95
                     
                 rig_finger(hand, s1, s2, s3, s4, align_rolls[f-1])
+                
+                if s1.swing:
+                    rig_new_target(mbs, "%s-rot.%s" % (split_suffix(s1.name)[0],suffixletter) , controlledmetabone=s1, parent=hand_target,  lock_location=(True,True,True), lock_rotation_w = True, lock_rotation=(False,True,True), lock_rotations_4d=False)
         
         def rig_foot():
             def fs(f,s):
@@ -1557,7 +1561,7 @@ def rig_full_body(meta_armature_obj,op=None):
             for multitarget_segment in multitarget_segments:
                 rig_target_affected(toes_target, multitarget_segment)
         
-            rig_point_puller(mbs, "foot-ball-target.%s" % suffixletter, foot, root, headtotail=1.0)
+            rig_new_target(mbs, "foot-ball-target.%s" % suffixletter, foot, root, headtotail=1.0)
             
         
         #generally progress from head downward...
@@ -1613,32 +1617,33 @@ def rig_full_body(meta_armature_obj,op=None):
 
 
     
-def rig_point_puller(metabonegroup,name,pulledmetabone,parent,scale=.10,headtotail=0,custom_shape_name= WIDGET_CUBE, show_wire = True,min_size=.005, lock_rotation = False, custom_widget_data = None):
+def rig_new_target(metabonegroup,name,controlledmetabone,parent,scale=.10,headtotail=0,custom_shape_name= WIDGET_CUBE, lock_location=(False,False,False), lock_rotation_w = False, lock_rotation = (False,False,False), lock_rotations_4d=False, custom_widget_data = None):
     
-    puller_headtotail_offset = (pulledmetabone.tail.copy() - pulledmetabone.head.copy()) * headtotail
+#    puller_headtotail_offset = (controlledmetabone.tail.copy() - controlledmetabone.head.copy()) * headtotail
     
-    direction = pulledmetabone.tail - pulledmetabone.head
-    direction = direction.normalized()
-    l = (pulledmetabone.tail-pulledmetabone.head).length
-    v = direction * scale * l
-    if v.length < min_size:
-        v = direction * min_size
+#    direction = controlledmetabone.tail - controlledmetabone.head
+#    direction = direction.normalized()
+#    l = (controlledmetabone.tail-controlledmetabone.head).length
+#    v = direction * scale * l
+#    if v.length < min_size:
+#        v = direction * min_size
     
-    pullermetabone = metabonegroup.new_bone(name)
+#    metabonegroup = MetaBoneDict()
+    pullermetabone = metabonegroup.new_bone_by_fraction(name=name, source_metabone=controlledmetabone, start_fraction=headtotail, end_fraction=headtotail+scale)
     
-    pullermetabone.head = pulledmetabone.head + puller_headtotail_offset
-    pullermetabone.tail = pullermetabone.head + v
-    pullermetabone.roll = pulledmetabone.roll
+#    pullermetabone.head = controlledmetabone.head + puller_headtotail_offset
+#    pullermetabone.tail = pullermetabone.head + v
+#    pullermetabone.roll = controlledmetabone.roll
     pullermetabone.parent = parent
-    pullermetabone.show_wire = show_wire
+    pullermetabone.show_wire = True
     pullermetabone.custom_shape = widgetdata_get(custom_shape_name, custom_widget_data)    
     pullermetabone.lock_scale = (True,True,True)
-    pullermetabone.align_roll = pulledmetabone.align_roll.copy()
-    if lock_rotation:
-        pullermetabone.lock_rotation = (True,True,True)
-        pullermetabone.lock_rotation_4d = True
+    pullermetabone.lock_rotation_w = lock_rotation_w
+    pullermetabone.lock_rotation = lock_rotation
+    pullermetabone.lock_rotations_4d = lock_rotations_4d
+    pullermetabone.lock_location = lock_location
     
-    rig_target_affected(pullermetabone, pulledmetabone, headtotail=headtotail)
+    rig_target_affected(pullermetabone, controlledmetabone, headtotail=headtotail)
     
     return pullermetabone
     

@@ -274,21 +274,27 @@ class BEPUikTools(bpy.types.Panel):
         
         op = col.operator(CreateControl.bl_idname,text="Position and Orientation")
         op.head_tail = 0
-        op.lock_rotation = False
+        op.lock_rotation = (False,False,False)
+        op.lock_rotation_w = False
+        op.lock_rotations_4d = False
         op.scale = .1
         op.widget_name = WIDGET_CUBE
         op.create_empties = False
         
         op = col.operator(CreateControl.bl_idname,text="Tail Position Only")
         op.head_tail = 1
-        op.lock_rotation = True
+        op.lock_rotation = (True,True,True)
+        op.lock_rotation_w = True 
+        op.lock_rotations_4d = True
         op.scale = .1
         op.widget_name = WIDGET_CUBE
         op.create_empties = False
         
         op = col.operator(CreateControl.bl_idname,text="Empty")
         op.head_tail = 0
-        op.lock_rotation = False
+        op.lock_rotation = (False,False,False)
+        op.lock_rotation_w = False
+        op.lock_rotations_4d = False
         op.create_empties = True
 
                 
@@ -479,7 +485,9 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
     head_tail = bpy.props.FloatProperty(name="Head to Tail",description="Head to tail position of the target",default=0,max=1,min=0)
     widget_name = bpy.props.StringProperty(name="Widget",description="Widget to use for bone display",default=WIDGET_CUBE)
     scale = bpy.props.FloatProperty(name="Scale",default=.15)
-    lock_rotation = bpy.props.BoolProperty(name="Lock Rotation",default=False)
+    lock_rotation_w = bpy.props.BoolProperty(name="Lock Rotation w",default=False)
+    lock_rotation = bpy.props.BoolVectorProperty(name="Lock Rotation",default=(False,False,False))
+    lock_rotations_4d = bpy.props.BoolProperty(name="Lock Rotation 4d",default=False)
     name = bpy.props.StringProperty(name="Name",description="Name of the newly created bones",default="")
     presuffix = bpy.props.StringProperty(name="Presuffix",description="Presuffix of the newly created bones",default="")
     create_empties = bpy.props.BoolProperty(name="Create Target Empties",default=False,description="Create target empties as targets instead of target bones")
@@ -527,10 +535,10 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
         else:
             root = None
         
-        pulledmetabones = {}
+        controlledmetabones = {}
         for ebone in bpy.context.selected_editable_bones:
-            pulledmetabone = metabones[ebone.name]
-            pulledmetabones[ebone.name] = pulledmetabone
+            controlledmetabone = metabones[ebone.name]
+            controlledmetabones[ebone.name] = controlledmetabone
             
             need_presuffix = False
             
@@ -566,7 +574,7 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
             else:
                 if is_unique_bone_name(ob, new_target_name) and ebone.name not in bones_with_controls:
                     new_targets.append((ebone.name,new_target_name))
-                    riggenerator.rig_point_puller(metabones, new_target_name, pulledmetabone=pulledmetabone, parent=root, headtotail=effective_head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation)
+                    riggenerator.rig_new_target(metabones, new_target_name, controlledmetabone=controlledmetabone, parent=root, headtotail=effective_head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation, lock_rotations_4d=self.lock_rotations_4d)
         
         if self.create_empties:
             bpy.ops.object.mode_set(toggle=False,mode='POSE')
