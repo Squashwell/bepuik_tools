@@ -91,7 +91,35 @@ def get_toes(pchans,suffix):
         if pchan.name.endswith(suffix) and p.match(pchan.name):
             toes.append(pchan)
             
-    return toes     
+    return toes
+
+def get_finger_rotators(pchans,suffix):
+    p = re.compile(r"finger[0-9]+-[0-9]+-rot")
+    finger_rotators = []
+    for pchan in pchans:
+        if pchan.name.endswith(suffix) and p.match(pchan.name):
+            finger_rotators.append(pchan)
+            
+    return finger_rotators  
+
+def get_fingers(pchans,suffix): 
+    p = re.compile(r"finger[0-9]+-[0-9]+")
+    fingers = []
+    for pchan in pchans:
+        if pchan.name.endswith(suffix) and p.match(pchan.name):
+            fingers.append(pchan)
+            
+    return fingers
+
+def get_palm_bones(pchans,suffix):
+    p_rot = re.compile(r"finger[0-9]+-[0-9]+-rot")
+    p = re.compile(r"finger[0-9]+-1")
+    palm_bones = []
+    for pchan in pchans:
+        if pchan.name.endswith(suffix) and p.match(pchan.name) and not p_rot.match(pchan.name):
+            palm_bones.append(pchan)
+            
+    return palm_bones  
 
 def get_bone(pchans,name,suffix):
     bone_name = "%s%s" % (name, suffix)
@@ -123,6 +151,50 @@ def find_control_with_target(pchan,target_name):
             return constraint
         
     return None 
+
+class BEPUikAutoRigTweakFingers(BEPUikAutoRigOperator,bpy.types.Operator):
+    bl_idname = "bepuik_tools.autorig_tweak_fingers"
+    bl_label = "Fingers Tweak"
+    bl_description = "Setup pose rigidities so the fingers are easily tweakable"
+    
+    suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default=".L")
+
+    @classmethod
+    def poll(cls,context):
+        if get_armature_ob(context):
+            return True
+        else:
+            return False
+        
+    def execute(self,context):
+        ob = get_armature_ob(context)
+        
+        pchans = ob.pose.bones
+        
+        hand = get_bone(pchans,"hand",self.suffix) 
+        fingers = get_fingers(pchans, self.suffix)
+        finger_rotators = get_finger_rotators(pchans, self.suffix)
+        palm_bones = get_palm_bones(pchans, self.suffix)
+        
+        for pchan in fingers:
+            pchan.bone.select = False
+            clear_pchan_control_rigidities(pchan)
+            
+        for pchan in palm_bones:
+            con = find_control_with_target(pchan, riggenerator.split_suffix(pchan.name)[0] + "-rot%s" % self.suffix)
+            if con:
+                con.orientation_rigidity = 1.0
+        
+        if hand:        
+            con = find_control_with_target(hand,"hand-target%s" % self.suffix)
+            if con:
+                con.bepuik_rigidity = 0
+                con.orientation_rigidity = 0
+                con.use_hard_rigidity = True
+                
+                
+        return {'FINISHED'}
+            
  
 class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_idname = "bepuik_tools.autorig_pivot_heel"
@@ -246,13 +318,16 @@ class BEPUikAutoRigLayers(bpy.types.Panel):
         
         col = middle.column(align=True)
         col.label("Left")
+        col.operator(BEPUikAutoRigTweakFingers.bl_idname).suffix = ".L"
         col.operator(BEPUikAutoRigPivotHeel.bl_idname).suffix = ".L"
         col.operator(BEPUikAutoRigPivotToes.bl_idname).suffix = ".L"
-    
+        
         col = middle.column(align=True)
         col.label("Right")
+        col.operator(BEPUikAutoRigTweakFingers.bl_idname).suffix = ".R"
         col.operator(BEPUikAutoRigPivotHeel.bl_idname).suffix = ".R"
         col.operator(BEPUikAutoRigPivotToes.bl_idname).suffix = ".R"
+        
         
         riggenerator.layout_rig_layers(self.layout,ob)
 
