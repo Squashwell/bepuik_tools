@@ -126,10 +126,10 @@ def find_control_with_target(pchan,target_name):
  
 class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_idname = "bepuik_tools.autorig_pivot_heel"
-    bl_label = "Pivot Heel"
+    bl_label = "Heel Pivot"
     bl_description = "Setup the pose so the foot pivots on the heel"
     
-    suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default="L")
+    suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default=".L")
     
     @classmethod
     def poll(cls,context):
@@ -174,10 +174,10 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
             
 class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_idname = "bepuik_tools.autorig_pivot_toes"
-    bl_label = "Pivot Toes"
+    bl_label = "Toes Pivot"
     bl_description = "Setup the pose so the foot pivots on the toes"
     
-    suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default="L")
+    suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default=".L")
     
     @classmethod
     def poll(cls,context):
