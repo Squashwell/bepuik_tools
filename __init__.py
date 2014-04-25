@@ -158,13 +158,6 @@ class BEPUikAutoRigTweakFingers(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_description = "Setup pose rigidities so the fingers are easily tweakable"
     
     suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default=".L")
-
-    @classmethod
-    def poll(cls,context):
-        if get_armature_ob(context):
-            return True
-        else:
-            return False
         
     def execute(self,context):
         ob = get_armature_ob(context)
@@ -202,13 +195,6 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_description = "Setup the pose so the foot pivots on the heel"
     
     suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default=".L")
-    
-    @classmethod
-    def poll(cls,context):
-        if get_armature_ob(context):
-            return True
-        else:
-            return False
     
     def execute(self,context):
         ob = get_armature_ob(context)
@@ -250,13 +236,6 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
     bl_description = "Setup the pose so the foot pivots on the toes"
     
     suffix = bpy.props.StringProperty(name="Suffix",description="Suffix of the foot bone, (.L,.R,...)",default=".L")
-    
-    @classmethod
-    def poll(cls,context):
-        if get_armature_ob(context):
-            return True
-        else:
-            return False
     
     def execute(self,context):
         ob = get_armature_ob(context)
