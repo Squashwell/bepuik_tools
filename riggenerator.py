@@ -468,7 +468,7 @@ class MetaBone():
             val = getattr(self,attr)
             safesetattr(ebone,attr,val)
 
-        ebone.align_roll(self.align_roll)
+        ebone.align_roll(self.align_roll.normalized())
         
         #create editbone selects the tail, but we dont want that
         ebone.select_tail = False
