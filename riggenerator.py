@@ -273,6 +273,7 @@ class MetaBlenderConstraint():
         excluded_attr_names = set(['name','type','connection_a','connection_b','subtarget','rigidity'])    
         angle_attr_names = set(['max_swing','max_twist'])
         
+        #get the attributes that associate with important attributes in a blender constraint
         self_attr_names = get_rig_relevant_attr_names(self)
         self_attr_names -= excluded_attr_names
         
@@ -307,6 +308,7 @@ class MetaBlenderConstraint():
                     so it has to be reapplied to set the proper blender python attribute
                     '''
                     setattr(constraint,attr_name + "_subtarget",val.name)
+                    setattr(constraint,attr_name + "_target",bpy.context.object)
                 elif typeofval is list or typeofval is tuple:
                     mytuple = val
                     
@@ -1068,7 +1070,7 @@ def rig_swing_limit(a,b,swing):
     c.axis_b = b, 'Y'
     c.max_swing = swing
     
-def rig_spine(hips,spine,chest,neck,head,ribsl,ribsr):
+def rig_spine(hips,spine,chest,neck,head,ribsl,ribsr,chest_stiffness,spine_stiffness):
     def rig_rib(rib):
         rib.parent = chest
         rib.use_deform = True
@@ -1129,6 +1131,18 @@ def rig_spine(hips,spine,chest,neck,head,ribsl,ribsr):
     rig_twist_joint(hips, spine)
     rig_twist_joint(chest, neck)
     
+    #spine stiffness stuff
+    c = hips.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',spine)
+    c.relative_orientation = spine_stiffness
+    c.use_offset_from_rest = True
+    c.bepuik_rigidity = 1.0
+    
+    c = spine.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',chest)
+    c.relative_orientation = chest_stiffness
+    c.use_offset_from_rest = True
+    c.bepuik_rigidity = 1.0
+    
+    
     return hips, head
 
 def sum_vectors(vecs):
@@ -1157,6 +1171,11 @@ w.faces = []
 w = WIDGET_DATA_DEFAULTS[WIDGET_ROOT] = WidgetData()
 w.vertices = [(0.7071067690849304, 0.7071067690849304, 0.0), (0.7071067690849304, -0.7071067690849304, 0.0), (-0.7071067690849304, 0.7071067690849304, 0.0), (-0.7071067690849304, -0.7071067690849304, 0.0), (0.8314696550369263, 0.5555701851844788, 0.0), (0.8314696550369263, -0.5555701851844788, 0.0), (-0.8314696550369263, 0.5555701851844788, 0.0), (-0.8314696550369263, -0.5555701851844788, 0.0), (0.9238795042037964, 0.3826834261417389, 0.0), (0.9238795042037964, -0.3826834261417389, 0.0), (-0.9238795042037964, 0.3826834261417389, 0.0), (-0.9238795042037964, -0.3826834261417389, 0.0), (0.9807852506637573, 0.19509035348892212, 0.0), (0.9807852506637573, -0.19509035348892212, 0.0), (-0.9807852506637573, 0.19509035348892212, 0.0), (-0.9807852506637573, -0.19509035348892212, 0.0), (0.19509197771549225, 0.9807849526405334, 0.0), (0.19509197771549225, -0.9807849526405334, 0.0), (-0.19509197771549225, 0.9807849526405334, 0.0), (-0.19509197771549225, -0.9807849526405334, 0.0), (0.3826850652694702, 0.9238788485527039, 0.0), (0.3826850652694702, -0.9238788485527039, 0.0), (-0.3826850652694702, 0.9238788485527039, 0.0), (-0.3826850652694702, -0.9238788485527039, 0.0), (0.5555717945098877, 0.8314685821533203, 0.0), (0.5555717945098877, -0.8314685821533203, 0.0), (-0.5555717945098877, 0.8314685821533203, 0.0), (-0.5555717945098877, -0.8314685821533203, 0.0), (0.19509197771549225, 1.2807848453521729, 0.0), (0.19509197771549225, -1.2807848453521729, 0.0), (-0.19509197771549225, 1.2807848453521729, 0.0), (-0.19509197771549225, -1.2807848453521729, 0.0), (1.280785322189331, 0.19509035348892212, 0.0), (1.280785322189331, -0.19509035348892212, 0.0), (-1.280785322189331, 0.19509035348892212, 0.0), (-1.280785322189331, -0.19509035348892212, 0.0), (0.3950919806957245, 1.2807848453521729, 0.0), (0.3950919806957245, -1.2807848453521729, 0.0), (-0.3950919806957245, 1.2807848453521729, 0.0), (-0.3950919806957245, -1.2807848453521729, 0.0), (1.280785322189331, 0.39509034156799316, 0.0), (1.280785322189331, -0.39509034156799316, 0.0), (-1.280785322189331, 0.39509034156799316, 0.0), (-1.280785322189331, -0.39509034156799316, 0.0), (0.0, 1.5807849168777466, 0.0), (0.0, -1.5807849168777466, 0.0), (1.5807852745056152, 0.0, 0.0), (-1.5807852745056152, 0.0, 0.0)]
 w.edges = [(0, 4), (1, 5), (2, 6), (3, 7), (4, 8), (5, 9), (6, 10), (7, 11), (8, 12), (9, 13), (10, 14), (11, 15), (16, 20), (17, 21), (18, 22), (19, 23), (20, 24), (21, 25), (22, 26), (23, 27), (0, 24), (1, 25), (2, 26), (3, 27), (16, 28), (17, 29), (18, 30), (19, 31), (12, 32), (13, 33), (14, 34), (15, 35), (28, 36), (29, 37), (30, 38), (31, 39), (32, 40), (33, 41), (34, 42), (35, 43), (36, 44), (37, 45), (38, 44), (39, 45), (40, 46), (41, 46), (42, 47), (43, 47)]
+w.faces = []
+
+w = WIDGET_DATA_DEFAULTS[WIDGET_BONE] = WidgetData()
+w.vertices = [(-.1, 0, -.1), (-.1, 1.0, -.1), (.1, 1.0, -.1), (.1, 0, -.1), (-.1, 0, .1), (-.1, 1.0, .1), (.1, 1.0, .1), (.1, 0, .1)]
+w.edges = [(4, 5), (5, 1), (1, 0), (0, 4), (5, 6), (6, 2), (2, 1), (6, 7), (7, 3), (3, 2), (7, 4), (0, 3)]
 w.faces = []
 
 w = WIDGET_DATA_DEFAULTS[WIDGET_CIRCLE] = widgetdata_circle(1)
@@ -1265,12 +1284,6 @@ def rig_full_body(meta_armature_obj,op=None):
     root.align_roll = Vector((0,0,1))
     root.custom_shape = widget_get(WIDGET_ROOT)
     root.show_wire = True
-    
-#    torso = mbs.new_bone("torso")
-#    torso.custom_shape = widget_get(WIDGET_ROOT)
-#    torso.head = hips.head.copy()
-#    torso.tail = torso.head + Vector((0,hips.length(),0))
-#    torso.parent = root
 
     eye_target = mbs.new_bone('eye_target')
     eye_target.head = Vector((0,eyel.tail[1] - .5,eyel.tail[2]))
@@ -1283,9 +1296,27 @@ def rig_full_body(meta_armature_obj,op=None):
     jaw.lock_location = (True,True,True)
     jaw.align_roll = Vector((0,0,1))
     jaw.parent = head
+    
+    
+    chest_stiffness = mbs.new_bone('chest-stiff')
+    chest_stiffness.head = chest.head.copy()
+    chest_stiffness.tail = chest.tail.copy()
+    chest_stiffness.custom_shape = widget_get(WIDGET_BONE)
+    chest_stiffness.parent = spine
+    chest_stiffness.show_wire = True
+    chest_stiffness.use_connect = True
+    chest_stiffness.align_roll = chest.align_roll.copy()
+    
+    spine_stiffness = mbs.new_bone('spine-stiff')
+    spine_stiffness.head = spine.head.copy()
+    spine_stiffness.tail = spine.tail.copy()
+    spine_stiffness.custom_shape = widget_get(WIDGET_BONE)
+    spine_stiffness.parent = hips
+    spine_stiffness.show_wire = True
+    spine_stiffness.use_connect = True
+    spine_stiffness.align_roll = spine.align_roll.copy()
 
-    rig_spine(hips, spine, chest, neck, head, ribsl, ribsr)
-#    hips.parent = torso
+    rig_spine(hips, spine, chest, neck, head, ribsl, ribsr, chest_stiffness, spine_stiffness)
     hips.parent = root
     
     rig_new_target(mbs, "hips-target", hips, root)
