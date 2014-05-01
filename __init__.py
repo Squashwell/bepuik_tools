@@ -655,13 +655,13 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
                 offset = Vector((0,affected_bone.length * self.head_tail,0))
                 
                 target_bone.matrix = affected_bone.matrix.normalized() * Matrix.Translation(offset)
-                riggenerator.organize_pchan_layer(target_bone, affected_bone_name, True)
+                
+                if ob.bepuik_autorig.is_auto_rig:
+                    riggenerator.organize_pchan_layer(target_bone, affected_bone_name, True)
         
             
         if previous_mode != ob.mode:
             bpy.ops.object.mode_set(mode=previous_mode)
-            
-        ob.bepuik_autorig.is_auto_rig = True
             
         return {'FINISHED'}
 
