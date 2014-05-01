@@ -1626,7 +1626,7 @@ def rig_full_body(meta_armature_obj,op=None):
     organize_pchan_layers(rig_ob)
     rig_ob.bepuik_autorig.is_meta_armature = False
     rig_ob.bepuik_autorig.is_auto_rig = True
-    rig_ob.use_bepuik_parented_peripheral_bones = True
+    rig_ob.use_bepuik_solve_peripheral_bones = False
     apply_rig_starting_layers(rig_ob)
     
     found_error = False
