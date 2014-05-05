@@ -495,6 +495,7 @@ class MetaBone():
                     'envelope_distance':None}
 
     pchan_attrs = { 'use_bepuik':False,
+                    'use_bepuik_always_solve':False,
                     'bepuik_ball_socket_rigidity':0,
                     'bepuik_rotational_heaviness':2.5,
                     'lock_location':(False,False,False),
@@ -1203,6 +1204,7 @@ def rig_spine(hips,spine,chest,neck,head,ribsl,ribsr,chest_stiffness,spine_stiff
 
 
     spine_defaults([hips,spine,chest,neck,head])
+    chest.use_bepuik_always_solve = True
     
     neck.bbone_in = .7
     neck.bbone_out = 1
