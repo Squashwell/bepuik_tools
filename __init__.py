@@ -94,7 +94,7 @@ def get_toes(pchans,suffix):
     return toes
 
 def get_finger_rotators(pchans,suffix):
-    p = re.compile(r"finger[0-9]+-[0-9]+-rot")
+    p = re.compile(r"finger[0-9]+-[0-9]+ rot")
     finger_rotators = []
     for pchan in pchans:
         if pchan.name.endswith(suffix) and p.match(pchan.name):
@@ -112,7 +112,7 @@ def get_fingers(pchans,suffix):
     return fingers
 
 def get_palm_bones(pchans,suffix):
-    p_rot = re.compile(r"finger[0-9]+-[0-9]+-rot")
+    p_rot = re.compile(r"finger[0-9]+-[0-9]+ rot")
     p = re.compile(r"finger[0-9]+-1")
     palm_bones = []
     for pchan in pchans:
@@ -174,12 +174,12 @@ class BEPUikAutoRigTweakFingers(BEPUikAutoRigOperator,bpy.types.Operator):
             clear_pchan_control_rigidities(pchan)
             
         for pchan in palm_bones:
-            con = find_control_with_target(pchan, riggenerator.split_suffix(pchan.name)[0] + "-rot%s" % self.suffix)
+            con = find_control_with_target(pchan, riggenerator.split_suffix(pchan.name)[0] + " rot%s" % self.suffix)
             if con:
                 con.orientation_rigidity = 1.0
         
         if hand:        
-            con = find_control_with_target(hand,"hand-target%s" % self.suffix)
+            con = find_control_with_target(hand,"hand target%s" % self.suffix)
             if con:
                 con.bepuik_rigidity = 0
                 con.orientation_rigidity = 0
@@ -202,7 +202,7 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
         pchans = ob.pose.bones
         
         foot = get_bone(pchans,"foot",self.suffix)
-        foot_target = get_bone(pchans,"foot-target",self.suffix)
+        foot_target = get_bone(pchans,"foot target",self.suffix)
         toes = get_toes(pchans,self.suffix)
         
         if foot and foot_target and toes:
@@ -219,7 +219,7 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator,bpy.types.Operator):
                                
         foot_target.bone.select = True
         
-        floor_target = get_bone(pchans,"foot-floor-target",self.suffix)
+        floor_target = get_bone(pchans,"foot floor target",self.suffix)
         
         if floor_target:
             floor = get_bone(pchans,"floor",self.suffix)
@@ -243,8 +243,8 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
         pchans = ob.pose.bones
         
         foot = get_bone(pchans,"foot",self.suffix)
-        toes_target = get_bone(pchans,"toes-target",self.suffix)
-        foot_ball_target = get_bone(pchans,"foot-ball-target",self.suffix)
+        toes_target = get_bone(pchans,"toes target",self.suffix)
+        foot_ball_target = get_bone(pchans,"foot ball target",self.suffix)
         toes = get_toes(pchans,self.suffix)
         
         if foot and foot_ball_target and toes_target and toes:
@@ -266,7 +266,7 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator,bpy.types.Operator):
         
         foot_ball_target.bone.select = True
         
-        floor_target = get_bone(pchans,"foot-floor-target",self.suffix)
+        floor_target = get_bone(pchans,"foot floor target",self.suffix)
         if floor_target:
             floor = get_bone(pchans,"floor",self.suffix)
             
@@ -565,22 +565,22 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
         if self.create_empties:
             effective_head_tail = 0
             default_presuffix = "target"
-            prefix = "%s-" % ob.name
+            prefix = "%s " % ob.name
         else:
             prefix = ""
             effective_head_tail = self.head_tail
             if effective_head_tail == 1.0:
-                default_presuffix = "tail"
+                default_presuffix = "tail target"
                 for pchan in bpy.context.selected_pose_bones:
                     if phcan_get_any_tail_control(ob,pchan):
                         bones_with_controls.add(pchan.name)   
             elif effective_head_tail == 0.0:
-                default_presuffix = "head"
+                default_presuffix = "target"
                 for pchan in bpy.context.selected_pose_bones:
                     if phcan_get_any_head_control(ob,pchan):
                         bones_with_controls.add(pchan.name)
             else:
-                default_presuffix = "mid"
+                default_presuffix = "mid target"
             
         metabones = riggenerator.MetaBoneDict.from_ob(ob)
         
@@ -612,9 +612,9 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
                     need_presuffix = True
             
             if self.presuffix:
-                presuffix = "%s%s" % ("-",self.presuffix)
+                presuffix = " %s" % self.presuffix
             elif need_presuffix:
-                presuffix = "%s%s" % ("-",default_presuffix)
+                presuffix = " %s" % default_presuffix
             else:
                 presuffix = ""
                 
@@ -639,7 +639,10 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
                 
                 c = affected_bone.constraints.new(type='BEPUIK_CONTROL')
                 c.connection_target = target
-                c.name = new_target_name
+                
+                namesuffix_pair = riggenerator.split_suffix(new_target_name)
+                
+                c.name = "%s control%s" % (namesuffix_pair[0],namesuffix_pair[1])
 
                 target.matrix_world = ob.matrix_world * affected_bone.matrix.normalized() 
                  

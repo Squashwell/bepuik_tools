@@ -115,25 +115,25 @@ MAP_SUBSTRING_SET_TO_ARMATURELAYER[(TARGET_SUBSTRINGS,'R')] = AL_TARGET
 
 FINGER_TOE_RIGIDITY = 3
 
-WIDGET_HAND = "Widget-Hand"
-WIDGET_SOLE = "Widget-Sole"
-WIDGET_BONE = "Widget-Bone"
-WIDGET_ROOT = "Widget-Root"
-WIDGET_EYE_TARGET = "Widget-Eye-Target"
-WIDGET_SPHERE = "Widget-Sphere"
-WIDGET_CUBE = "Widget-Cube"
-WIDGET_PAD = "Widget-Pad"
-WIDGET_CIRCLE = "Widget-Circle"
-WIDGET_FOOT = "Widget-Foot"
-WIDGET_FLOOR = "Widget-Floor"
-WIDGET_FLOOR_TARGET = "Widget-Floor-Target"
-WIDGET_FLOOR_L = "Widget-Floor.L"
-WIDGET_FLOOR_R = "Widget-Floor.R"
-WIDGET_FLOOR_TARGET_L = "Widget-Floor-Target.L"
-WIDGET_FLOOR_TARGET_R = "Widget-Floor-Target.R"
-WIDGET_TOES = "Widget-Toes"
-WIDGET_STIFF_CIRCLE = "Widget-Stiff-Circle"
-WIDGET_STIFF_TRIANGLE = "Widget-Stiff-Triangle"
+WIDGET_HAND = "widget hand"
+WIDGET_SOLE = "widget sole"
+WIDGET_BONE = "widget bone"
+WIDGET_ROOT = "widget root"
+WIDGET_EYE_TARGET = "widget eye target"
+WIDGET_SPHERE = "widget sphere"
+WIDGET_CUBE = "widget cube"
+WIDGET_PAD = "widget pad"
+WIDGET_CIRCLE = "widget circle"
+WIDGET_FOOT = "widget foot"
+WIDGET_FLOOR = "widget floor"
+WIDGET_FLOOR_TARGET = "widget floor target"
+WIDGET_FLOOR_L = "widget floor.L"
+WIDGET_FLOOR_R = "widget floor.R"
+WIDGET_FLOOR_TARGET_L = "widget floor target.L"
+WIDGET_FLOOR_TARGET_R = "widget floor target.R"
+WIDGET_TOES = "widget toes"
+WIDGET_STIFF_CIRCLE = "widget stiff circle"
+WIDGET_STIFF_TRIANGLE = "widget stiff triangle"
 
 class WidgetData():
     def __init__(self,vertices=[],edges=[],faces=[]):
@@ -144,7 +144,7 @@ class WidgetData():
         self.ob = None
 
     def create(self,name):
-        mesh = bpy.data.meshes.new(name + "-Mesh")
+        mesh = bpy.data.meshes.new(name + " mesh")
         ob = bpy.data.objects.new(name,mesh)
         ob.data.from_pydata(self.vertices,self.edges,self.faces)
         ob.data.update()
@@ -602,7 +602,7 @@ class MetaBone():
             
     def new_meta_blender_constraint(self,type,target,name=None):
         if not name:
-            name = "%s_%s" % (type.lower(),len(self.meta_blender_constraints)+1)
+            name = "%s %s" % (type.lower().replace("_"," "),len(self.meta_blender_constraints)+1)
             
         mbc = MetaBlenderConstraint(type,name)
         mbc.connection_a = self
@@ -1127,11 +1127,11 @@ def meta_init_leg(upleg_vec, knee_vec, ankle_vec, toe_vec, foot_width):
         foottarget_length = foot_vec.length * 1.1
         ball_to_heel_dir = (foottarget_a - foottarget_b).normalized()
         
-        foottarget = mbg.new_bone("foot-target")
+        foottarget = mbg.new_bone("foot target")
         foottarget.head = foot.tail.copy() + ball_to_heel_dir * foottarget_length
         foottarget.tail = foot.tail.copy()
         
-        foot_width_bone = mbg.new_bone("foot-width")
+        foot_width_bone = mbg.new_bone("foot width")
         foot_width_bone.head = foottarget.head.copy()
         foot_width_bone.head += foottarget.y_axis() * foottarget.length()
         foot_width_bone.head += foottarget.x_axis() * foot_width /2
@@ -1149,7 +1149,11 @@ def degrees_between(a,b):
     return math.degrees(math.acos(max(min(a.dot(b),1),-1))) 
 
 def rig_target_affected(target,affected,headtotail=0,position_rigidity=0,orientation_rigidity=0,hard_rigidity=False):
-    metaconstraint = affected.new_meta_blender_constraint('BEPUIK_CONTROL',target,target.name)
+    name, side_suffix = split_suffix(target.name)
+    if name.endswith(" target"):
+        name = name[:-len(" target")]
+    
+    metaconstraint = affected.new_meta_blender_constraint('BEPUIK_CONTROL',target,"%s control%s" % (name,side_suffix))
     metaconstraint.connection_b = target
     metaconstraint.orientation_rigidity = orientation_rigidity
     metaconstraint.bepuik_rigidity = position_rigidity
@@ -1303,7 +1307,7 @@ def rig_full_body(meta_armature_obj,op=None):
     root.custom_shape = widget_get(WIDGET_ROOT)
     root.show_wire = True
 
-    eye_target = mbs.new_bone('eye_target')
+    eye_target = mbs.new_bone('eye target')
     eye_target.head = Vector((0,eyel.tail[1] - .5,eyel.tail[2]))
     eye_target.tail = eye_target.head + Vector((0,-(eyel.length() + eyer.length()),0))
     eye_target.custom_shape = widget_get(WIDGET_EYE_TARGET)
@@ -1316,7 +1320,7 @@ def rig_full_body(meta_armature_obj,op=None):
     jaw.parent = head
     
     
-    chest_stiffness = mbs.new_bone('chest-stiff')
+    chest_stiffness = mbs.new_bone('chest stiff')
     chest_stiffness.head = chest.head.copy()
     chest_stiffness.tail = chest.tail.copy()
     chest_stiffness.custom_shape = widget_get(WIDGET_STIFF_TRIANGLE)
@@ -1325,7 +1329,7 @@ def rig_full_body(meta_armature_obj,op=None):
     chest_stiffness.use_connect = True
     chest_stiffness.align_roll = chest.align_roll.copy()
     
-    spine_stiffness = mbs.new_bone('spine-stiff')
+    spine_stiffness = mbs.new_bone('spine stiff')
     spine_stiffness.head = spine.head.copy()
     spine_stiffness.tail = spine.tail.copy()
     spine_stiffness.custom_shape = widget_get(WIDGET_STIFF_CIRCLE)
@@ -1337,10 +1341,10 @@ def rig_full_body(meta_armature_obj,op=None):
     rig_spine(hips, spine, chest, neck, head, ribsl, ribsr, chest_stiffness, spine_stiffness)
     hips.parent = root
     
-    rig_new_target(mbs, "hips-target", hips, root)
-    rig_new_target(mbs, "chest-target", chest, root)
-    rig_new_target(mbs, "spine-target", spine, root)
-    rig_new_target(mbs, "head-target", head, root)
+    rig_new_target(mbs, "hips target", hips, root)
+    rig_new_target(mbs, "chest target", chest, root)
+    rig_new_target(mbs, "spine target", spine, root)
+    rig_new_target(mbs, "head target", head, root)
     
              
     hips_down_mat = hips.matrix() * Matrix.Rotation(math.pi,4,'Z')
@@ -1364,14 +1368,14 @@ def rig_full_body(meta_armature_obj,op=None):
         shoulder = mbs["shoulder.%s" % suffixletter]
         uparm = mbs["uparm.%s" % suffixletter]
         loarm = mbs["loarm.%s" % suffixletter]
-        foot_target = mbs["foot-target.%s" % suffixletter]
-        foot_width_bone = mbs["foot-width.%s" % suffixletter]
+        foot_target = mbs["foot target.%s" % suffixletter]
+        foot_width_bone = mbs["foot width.%s" % suffixletter]
         
         def ps(name,p,s):
             return mbs["%s%s-%s.%s" % (name,p,s,suffixletter)]
         
         def pssc(name,p,s):
-            return mbs.new_bone("MCH-%s%s-%s-swingcenter.%s" % (name,p,s,suffixletter))
+            return mbs.new_bone("MCH-%s%s %s swingcenter.%s" % (name,p,s,suffixletter))
 
         def get_segment_siblings(name,s):
             segment_siblings=[]
@@ -1426,14 +1430,14 @@ def rig_full_body(meta_armature_obj,op=None):
             custom_widget_data[hand_custom_shape_name] = widgetdata_pad(width=hand_width_local*.75,length=.75,mid=0)
             custom_widget_data[hand_custom_shape_name].subsurface_levels = 1
             
-            hand_target_custom_shape_name = "%s-Target.%s" % (WIDGET_HAND,suffixletter)
+            hand_target_custom_shape_name = "%s target.%s" % (WIDGET_HAND,suffixletter)
             custom_widget_data[hand_target_custom_shape_name] = widgetdata_pad(width=hand_width_local*1.2,length=1.0*1.2,mid=.1)
             
             
             hand.custom_shape = widget_get(hand_custom_shape_name)
             hand.show_wire = True
             
-            hand_target = mbs.new_bone("hand-target.%s" % suffixletter)
+            hand_target = mbs.new_bone("hand target.%s" % suffixletter)
             hand_target.parent = root 
             hand_target.head = hand.head.copy()
             hand_target.tail = hand.tail.copy()
@@ -1485,7 +1489,7 @@ def rig_full_body(meta_armature_obj,op=None):
                 rig_finger(hand, s1, s2, s3, s4, align_rolls[f-1])
                 
                 if s1.swing:
-                    rig_new_target(mbs, "%s-rot.%s" % (split_suffix(s1.name)[0],suffixletter) , controlledmetabone=s1, parent=hand_target,  lock_location=(True,True,True), lock_rotation_w = True, lock_rotation=(False,True,True), lock_rotations_4d=False)
+                    rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0],suffixletter) , controlledmetabone=s1, parent=hand_target,  lock_location=(True,True,True), lock_rotation_w = True, lock_rotation=(False,True,True), lock_rotations_4d=False)
         
         def rig_foot():
             def fs(f,s):
@@ -1519,12 +1523,12 @@ def rig_full_body(meta_armature_obj,op=None):
 #            heel.align_roll = Vector((0,-1,0))
 #            heel.parent = foot
             
-            foot_target_custom_shape_name = "%s-Target.%s" % (WIDGET_FOOT,suffixletter)
+            foot_target_custom_shape_name = "%s target.%s" % (WIDGET_FOOT,suffixletter)
             custom_widget_data[foot_target_custom_shape_name] = widgetdata_pad(width=foot_width_world / foot_target.length(),length=1.0,mid=.3)
             foot_target.show_wire = True
             foot_target.custom_shape = widget_get(foot_target_custom_shape_name)
             
-            toes_target = mbs.new_bone("toes-target.%s" % suffixletter)
+            toes_target = mbs.new_bone("toes target.%s" % suffixletter)
             toes_target.head = foot.tail.copy()
             toes_target.tail = final_segments_tail_average.copy()
             toes_target.tail = toes_target.head + (foot_target.y_axis() * toes_target.length()) 
@@ -1532,7 +1536,7 @@ def rig_full_body(meta_armature_obj,op=None):
             
             toes_width_local = foot_width_world / toes_target.length()
             
-            toes_target_custom_shape_name = "%s-Target.%s" % (WIDGET_TOES,suffixletter)
+            toes_target_custom_shape_name = "%s target.%s" % (WIDGET_TOES,suffixletter)
             custom_widget_data[toes_target_custom_shape_name] = widgetdata_pad(width=toes_width_local*1.2,length=1.2,mid=.1)
             toes_target.show_wire = True
             toes_target.custom_shape = widget_get(toes_target_custom_shape_name)
@@ -1544,7 +1548,7 @@ def rig_full_body(meta_armature_obj,op=None):
 #            floor.custom_shape = widget_get(WIDGET_FLOOR)#"%s.%s" % (WIDGET_FLOOR,suffixletter))
 #            floor.use_bepuik = True
 #            
-#            floor_target = mbs.new_bone("foot-floor-target.%s" % suffixletter)
+#            floor_target = mbs.new_bone("foot floor target.%s" % suffixletter)
 #            floor_target.head = foot_target.head.copy()
 #            floor_target.tail = foot_target.tail.copy()
 #            floor_target.parent = root
@@ -1610,7 +1614,7 @@ def rig_full_body(meta_armature_obj,op=None):
             for multitarget_segment in multitarget_segments:
                 rig_target_affected(toes_target, multitarget_segment)
         
-            rig_new_target(mbs, "foot-ball-target.%s" % suffixletter, foot, root, headtotail=1.0)
+            rig_new_target(mbs, "foot ball target.%s" % suffixletter, foot, root, headtotail=1.0)
             
         
         #generally progress from head downward...
@@ -1629,7 +1633,7 @@ def rig_full_body(meta_armature_obj,op=None):
                                
         rig_foot()
 
-        measure = mbs.new_bone("MCH-legtwistmeasureaxis.%s" % suffixletter,transform=measurement_axis_mat)
+        measure = mbs.new_bone("MCH-leg twist measure axis.%s" % suffixletter,transform=measurement_axis_mat)
         rig_hips_to_upleg(hips, upleg, hips, measure, relative_x_axis)
 
 
@@ -1954,7 +1958,7 @@ def rig_twistproxy(metabonegroup,obj,name,parent,twistproxytarget,bbone_segments
 #        twist.align_roll = align_roll.copy()
 
 def rig_twistanchor(metabonegroup,obj,name,parent,twistanchortarget,align_roll):        
-        anchor = metabonegroup.new_bone_by_fraction("%s-anchor" % name,twistanchortarget,0,.1)
+        anchor = metabonegroup.new_bone_by_fraction("%s anchor" % name,twistanchortarget,0,.1)
         anchor.use_bepuik = False 
         anchor.use_deform = False
         anchor.parent = parent
