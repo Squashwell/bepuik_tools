@@ -378,7 +378,7 @@ class MetaBlenderConstraint():
     def apply_data_to_pchan(self,pbone):
         constraint = pbone.constraints.new(type=self.type)
         
-        excluded_attr_names = set(['name','type','connection_a','connection_b','subtarget','rigidity'])    
+        excluded_attr_names = set(['name','type','connection_a','connection_b','target','subtarget','rigidity'])    
         angle_attr_names = set(['max_swing','max_twist'])
         
         #get the attributes that associate with important attributes in a blender constraint
@@ -450,10 +450,7 @@ class MetaBlenderConstraint():
                                             attr:%s
                                             val:%s""" % (pbone.name,constraint.name,attr_name,val))
                         
-        else:
-            constraint.target = bpy.context.object
-            constraint.subtarget = self.connection_b.name
-                
+        else:                
             for attr_name in self_attr_names:
                 setattr(constraint,attr_name,getattr(self,attr_name))        
 
@@ -600,13 +597,20 @@ class MetaBone():
         
             meta_blender_constraint.apply_data_to_pchan(pchan)
             
-    def new_meta_blender_constraint(self,type,target,name=None):
+    def new_meta_blender_constraint(self,type,targetmetabone=None,name=None):
         if not name:
             name = "%s %s" % (type.lower().replace("_"," "),len(self.meta_blender_constraints)+1)
             
         mbc = MetaBlenderConstraint(type,name)
-        mbc.connection_a = self
-        mbc.connection_b = target
+        
+        if type.startswith('BEPUIK_'):
+            mbc.connection_a = self
+            if targetmetabone:
+                mbc.connection_b = targetmetabone
+        else:
+            if targetmetabone:
+                mbc.subtarget = targetmetabone
+        
         self.meta_blender_constraints.append(mbc)
         return mbc
     
@@ -1182,82 +1186,6 @@ def rig_swing_limit(a,b,swing):
     c.axis_a = b, 'Y'
     c.axis_b = b, 'Y'
     c.max_swing = swing
-    
-def rig_spine(hips,spine,chest,neck,head,ribsl,ribsr,chest_stiffness,spine_stiffness):
-    def rig_rib(rib):
-        rib.parent = chest
-        rib.use_deform = True
-        rib.align_roll = Vector((0,-1,0))
-    
-    def spine_defaults(bone_list):
-        prev_bone = None
-        for bone in bone_list:
-            bone.use_deform = True
-            bone.use_bepuik = True
-            bone.align_roll = Vector((0,-1,0))
-            
-            if prev_bone:
-                bone.use_connect = True
-                bone.bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
-                bone.parent = prev_bone
-            
-            prev_bone = bone
-        
-    rig_rib(ribsl)
-    rig_rib(ribsr)
-
-
-    spine_defaults([hips,spine,chest,neck,head])
-    chest.use_bepuik_always_solve = True
-    
-    neck.bbone_in = .7
-    neck.bbone_out = 1
-    neck.bbone_segments = 7
-    
-    hips.bepuik_rotational_heaviness = 20
-    
-    spine.bbone_segments = 8
-    spine.bbone_in = 1
-    spine.bbone_out = 1
-    spine.bepuik_rotational_heaviness = 40
-    
-    rig_twist_limit(hips, chest, twist=45)
-    rig_twist_limit(chest, head, twist=100)
-    
-    rig_swing_limit(hips, spine, 45)
-    rig_swing_limit(spine, chest, 45)
-    rig_swing_limit(chest, neck, 40)
-    
-    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
-    c.axis_a = neck, 'Z'
-    c.axis_b = neck, 'Y'
-    c.max_swing = 100
-    
-    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
-    c.axis_a = neck, 'X'
-    c.axis_b = neck, 'X'
-    c.max_swing = 10
-    
-    neck.bepuik_rotational_heaviness = 20
-    
-    rig_swing_limit(neck, head, 80)
-    
-    rig_twist_joint(hips, spine)
-    rig_twist_joint(chest, neck)
-    
-    #spine stiffness stuff
-    c = hips.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',spine)
-    c.relative_orientation = spine_stiffness
-    c.use_offset_from_rest = True
-    c.bepuik_rigidity = 1.0
-    
-    c = spine.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',chest)
-    c.relative_orientation = chest_stiffness
-    c.use_offset_from_rest = True
-    c.bepuik_rigidity = 1.0
-    
-    
-    return hips, head
 
 def sum_vectors(vecs):
     v_sum = Vector((0,0,0))
@@ -1320,7 +1248,71 @@ def rig_full_body(meta_armature_obj,op=None):
     jaw.parent = head
     
     
-    chest_stiffness = mbs.new_bone('chest stiff')
+
+
+    def rig_rib(rib):
+        rib.parent = chest
+        rib.use_deform = True
+        rib.align_roll = Vector((0,-1,0))
+    
+    def spine_defaults(bone_list):
+        prev_bone = None
+        for bone in bone_list:
+            bone.use_deform = True
+            bone.use_bepuik = True
+            bone.align_roll = Vector((0,-1,0))
+            
+            if prev_bone:
+                bone.use_connect = True
+                bone.bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
+                bone.parent = prev_bone
+            
+            prev_bone = bone
+        
+    rig_rib(ribsl)
+    rig_rib(ribsr)
+
+
+    spine_defaults([hips,spine,chest,neck,head])
+    chest.use_bepuik_always_solve = True
+    
+    neck.bbone_in = .7
+    neck.bbone_out = 1
+    neck.bbone_segments = 7
+    
+    hips.bepuik_rotational_heaviness = 20
+    
+    spine.bbone_segments = 8
+    spine.bbone_in = 1
+    spine.bbone_out = 1
+    spine.bepuik_rotational_heaviness = 40
+    
+    rig_twist_limit(hips, chest, twist=45)
+    rig_twist_limit(chest, head, twist=100)
+    
+    rig_swing_limit(hips, spine, 45)
+    rig_swing_limit(spine, chest, 45)
+    rig_swing_limit(chest, neck, 40)
+    
+    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
+    c.axis_a = neck, 'Z'
+    c.axis_b = neck, 'Y'
+    c.max_swing = 100
+    
+    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
+    c.axis_a = neck, 'X'
+    c.axis_b = neck, 'X'
+    c.max_swing = 10
+    
+    neck.bepuik_rotational_heaviness = 20
+    
+    rig_swing_limit(neck, head, 80)
+    
+    rig_twist_joint(hips, spine)
+    rig_twist_joint(chest, neck)
+    
+    #spine stiffness stuff
+    chest_stiffness = mbs.new_bone("chest stiff")
     chest_stiffness.head = chest.head.copy()
     chest_stiffness.tail = chest.tail.copy()
     chest_stiffness.custom_shape = widget_get(WIDGET_STIFF_TRIANGLE)
@@ -1329,7 +1321,7 @@ def rig_full_body(meta_armature_obj,op=None):
     chest_stiffness.use_connect = True
     chest_stiffness.align_roll = chest.align_roll.copy()
     
-    spine_stiffness = mbs.new_bone('spine stiff')
+    spine_stiffness = mbs.new_bone("spine stiff")
     spine_stiffness.head = spine.head.copy()
     spine_stiffness.tail = spine.tail.copy()
     spine_stiffness.custom_shape = widget_get(WIDGET_STIFF_CIRCLE)
@@ -1337,8 +1329,35 @@ def rig_full_body(meta_armature_obj,op=None):
     spine_stiffness.show_wire = True
     spine_stiffness.use_connect = True
     spine_stiffness.align_roll = spine.align_roll.copy()
+    
+    stiff_switch = mbs.new_bone("torso stiff switch")
+    stiff_switch.head = chest.head.copy() + Vector((0,chest.length()/5,0))
+    stiff_switch.tail = stiff_switch.head + Vector((0,chest.length()/5,0))
+    stiff_switch.align_roll = Vector((0,0,1))
+    stiff_switch.parent = chest
+    stiff_switch.lock_location = (True,True,True)
+    stiff_switch.rotation_mode = 'ZYX'
+    stiff_switch.lock_scale = (True,True,True)
+    stiff_switch.lock_rotation = (False,True,True)
+    
+    c = stiff_switch.new_meta_blender_constraint('LIMIT_ROTATION')
+    c.use_limit_x = True
+    c.use_limit_y = True
+    c.use_limit_z = True
+    c.use_transform_limit = True
+    c.owner_space = 'LOCAL'
+    c.max_x = 1.570797
 
-    rig_spine(hips, spine, chest, neck, head, ribsl, ribsr, chest_stiffness, spine_stiffness)
+    spine_stiff_angular_joint = hips.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',spine)
+    spine_stiff_angular_joint.relative_orientation = spine_stiffness
+    spine_stiff_angular_joint.use_offset_from_rest = True
+    spine_stiff_angular_joint.bepuik_rigidity = 1.0
+    
+    chest_stiff_angular_joint = spine.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',chest)
+    chest_stiff_angular_joint.relative_orientation = chest_stiffness
+    chest_stiff_angular_joint.use_offset_from_rest = True
+    chest_stiff_angular_joint.bepuik_rigidity = 1.0
+
     hips.parent = root
     
     rig_new_target(mbs, "hips target", hips, root)
@@ -1644,6 +1663,21 @@ def rig_full_body(meta_armature_obj,op=None):
     bpy.ops.object.mode_set(mode='EDIT')
     
     mbs.to_ob(rig_ob)
+    
+    def do_driver_on_bone(driving_bone_name,driven_bone_name,driven_constraint_name):
+        fcurve = rig_ob.pose.bones[driven_bone_name].constraints[driven_constraint_name].driver_add("bepuik_rigidity")
+        fcurve.modifiers.remove(fcurve.modifiers[0])
+        driver = fcurve.driver
+        driver.type = 'AVERAGE'
+        v = driver.variables.new()
+        v.type = 'TRANSFORMS'
+        v.targets[0].transform_space = 'LOCAL_SPACE'
+        v.targets[0].transform_type = 'ROT_X'
+        v.targets[0].id = rig_ob
+        v.targets[0].bone_target = driving_bone_name
+        
+    do_driver_on_bone(stiff_switch.name, hips.name, spine_stiff_angular_joint.name)
+    do_driver_on_bone(stiff_switch.name, spine.name, chest_stiff_angular_joint.name)
     
     organize_pchan_layers(rig_ob)
     rig_ob.bepuik_autorig.is_meta_armature = False
