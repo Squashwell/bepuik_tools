@@ -1329,6 +1329,8 @@ def rig_full_body(meta_armature_obj,op=None):
     spine_stiffness.show_wire = True
     spine_stiffness.use_connect = True
     spine_stiffness.align_roll = spine.align_roll.copy()
+    spine_stiffness.rotation_mode = 'YZX'
+    spine_stiffness.lock_rotation = (False,True,False)
     
     stiff_switch = mbs.new_bone("torso stiff switch")
     stiff_switch.head = chest.head.copy() + Vector((0,chest.length()/5,0))
