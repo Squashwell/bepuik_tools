@@ -622,6 +622,7 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
                 offset = Vector((0,affected_bone.length * self.head_tail,0))
                 
                 target_bone.matrix = affected_bone.matrix.normalized() * Matrix.Translation(offset)
+                target_bone.scale = (1,1,1)
                 
                 if ob.bepuik_autorig.is_auto_rig:
                     riggenerator.organize_pchan_layer(target_bone, affected_bone_name, True)
