@@ -1291,9 +1291,9 @@ def rig_full_body(meta_armature_obj,op=None):
     rig_twist_limit(hips, chest, twist=45)
     rig_twist_limit(chest, head, twist=100)
     
-    rig_swing_limit(hips, spine, 45)
-    rig_swing_limit(spine, chest, 45)
-    rig_swing_limit(chest, neck, 40)
+    rig_swing_limit(hips, spine, 60)
+    rig_swing_limit(spine, chest, 60)
+    rig_swing_limit(chest, neck, 60)
     
     c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
     c.axis_a = neck, 'Z'
