@@ -489,6 +489,7 @@ class MetaBone():
                     'use_connect':False,
                     'use_deform':False,
                     'use_envelope_multiply':False,
+                    'use_inherit_rotation':True,
                     'envelope_distance':None}
 
     pchan_attrs = { 'use_bepuik':False,
@@ -1751,6 +1752,7 @@ def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,relative_x_axis):
     
     upleg.use_deform = True
     upleg.parent = upleg_parent
+    upleg.use_bepuik_always_solve = True
     
     c = hips.new_meta_blender_constraint('BEPUIK_TWIST_LIMIT',upleg)
     c.axis_a = hips, 'NEGATIVE_Y'
@@ -1762,6 +1764,7 @@ def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,relative_x_axis):
     
     if upleg_parent == hips:
         flag_bone_deforming_ballsocket_bepuik(upleg)
+        upleg.use_inherit_rotation = False
     else:
         c = hips.new_meta_blender_constraint('BEPUIK_BALL_SOCKET_JOINT',upleg)
         c.anchor = upleg, 0
