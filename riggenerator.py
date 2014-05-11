@@ -1125,22 +1125,22 @@ def meta_init_leg(upleg_vec, knee_vec, ankle_vec, toe_vec, foot_width):
     foot_vec = (foot.tail - foot.head)
     vec_to_heel = loleg_vec.normalized() * ((loleg_vec.length + foot_vec.length) * 2) 
     
-    foottarget_a = geometry.intersect_line_plane(loleg.head,loleg.head + vec_to_heel,foot.tail,Vector((0,0,1)))
-    foottarget_b = foot.tail.copy()
+    foot_target_a = geometry.intersect_line_plane(loleg.head,loleg.head + vec_to_heel,foot.tail,Vector((0,0,1)))
+    foot_target_b = foot.tail.copy()
     
-    if foottarget_a:
-        foottarget_length = foot_vec.length * 1.1
-        ball_to_heel_dir = (foottarget_a - foottarget_b).normalized()
+    if foot_target_a:
+        foot_target_length = foot_vec.length * 1.1
+        ball_to_heel_dir = (foot_target_a - foot_target_b).normalized()
         
-        foottarget = mbg.new_bone("foot target")
-        foottarget.head = foot.tail.copy() + ball_to_heel_dir * foottarget_length
-        foottarget.tail = foot.tail.copy()
+        foot_target = mbg.new_bone("foot target")
+        foot_target.head = foot.tail.copy() + ball_to_heel_dir * foot_target_length
+        foot_target.tail = foot.tail.copy()
         
         foot_width_bone = mbg.new_bone("foot width")
-        foot_width_bone.head = foottarget.head.copy()
-        foot_width_bone.head += foottarget.y_axis() * foottarget.length()
-        foot_width_bone.head += foottarget.x_axis() * foot_width /2
-        foot_width_bone.tail = foot_width_bone.head + (-foottarget.x_axis() * foot_width)
+        foot_width_bone.head = foot_target.head.copy()
+        foot_width_bone.head += foot_target.y_axis() * foot_target.length()
+        foot_width_bone.head += foot_target.x_axis() * foot_width /2
+        foot_width_bone.tail = foot_width_bone.head + (-foot_target.x_axis() * foot_width)
     
     return mbg
 
@@ -1153,7 +1153,7 @@ def degrees_between(a,b):
         
     return math.degrees(math.acos(max(min(a.dot(b),1),-1))) 
 
-def rig_target_affected(target,affected,headtotail=0,position_rigidity=0,orientation_rigidity=0,hard_rigidity=False):
+def rig_target_affected(target,affected,headtotail=0,position_rigidity=0,orientation_rigidity=0,hard_rigidity=False,use_rest_offset=False):
     name, side_suffix = split_suffix(target.name)
     if name.endswith(" target"):
         name = name[:-len(" target")]
@@ -1164,6 +1164,7 @@ def rig_target_affected(target,affected,headtotail=0,position_rigidity=0,orienta
     metaconstraint.bepuik_rigidity = position_rigidity
     metaconstraint.use_hard_rigidity = hard_rigidity
     metaconstraint.pulled_point = (0,headtotail,0)
+    metaconstraint.use_rest_offset=use_rest_offset
     target.show_wire = True
     target.lock_scale = (True,True,True)
     
@@ -1353,12 +1354,12 @@ def rig_full_body(meta_armature_obj,op=None):
 
     spine_stiff_angular_joint = hips.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',spine)
     spine_stiff_angular_joint.relative_orientation = spine_stiffness
-    spine_stiff_angular_joint.use_offset_from_rest = True
+    spine_stiff_angular_joint.use_rest_offset = True
     spine_stiff_angular_joint.bepuik_rigidity = 1.0
     
     chest_stiff_angular_joint = spine.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT',chest)
     chest_stiff_angular_joint.relative_orientation = chest_stiffness
-    chest_stiff_angular_joint.use_offset_from_rest = True
+    chest_stiff_angular_joint.use_rest_offset = True
     chest_stiff_angular_joint.bepuik_rigidity = 1.0
 
     hips.parent = root
@@ -1636,7 +1637,7 @@ def rig_full_body(meta_armature_obj,op=None):
             for multitarget_segment in multitarget_segments:
                 rig_target_affected(toes_target, multitarget_segment)
         
-            rig_new_target(mbs, "foot ball target.%s" % suffixletter, foot, root, headtotail=1.0)
+            rig_new_target(mbs, "foot ball target.%s" % suffixletter, foot, root, headtotail=1.0,use_rest_offset=True)
             
         
         #generally progress from head downward...
@@ -1707,7 +1708,7 @@ def rig_full_body(meta_armature_obj,op=None):
 
 
     
-def rig_new_target(metabonegroup,name,controlledmetabone,parent,scale=.10,headtotail=0,custom_shape_name= WIDGET_CUBE, lock_location=(False,False,False), lock_rotation_w = False, lock_rotation = (False,False,False), lock_rotations_4d=False, custom_widget_data = None):
+def rig_new_target(metabonegroup,name,controlledmetabone,parent,scale=.10,headtotail=0,custom_shape_name= WIDGET_CUBE, lock_location=(False,False,False), lock_rotation_w = False, lock_rotation = (False,False,False), lock_rotations_4d=False, custom_widget_data = None, use_rest_offset=False):
     
 #    puller_headtotail_offset = (controlledmetabone.tail.copy() - controlledmetabone.head.copy()) * headtotail
     
@@ -1733,7 +1734,7 @@ def rig_new_target(metabonegroup,name,controlledmetabone,parent,scale=.10,headto
     pullermetabone.lock_rotations_4d = lock_rotations_4d
     pullermetabone.lock_location = lock_location
     
-    rig_target_affected(pullermetabone, controlledmetabone, headtotail=headtotail)
+    rig_target_affected(pullermetabone, controlledmetabone, headtotail=headtotail, use_rest_offset=use_rest_offset)
     
     return pullermetabone
     
@@ -1913,7 +1914,7 @@ def rig_toe(s1,s2,s3,align_roll):
     
       
   
-def rig_leg(upleg,loleg,foot,foottarget,relative_x_axis='X'):
+def rig_leg(upleg,loleg,foot,foot_target,relative_x_axis='X'):
     upleg.align_roll = Vector((0,-1,0))
     flag_bone_deforming_ballsocket_bepuik(upleg)
     
@@ -1961,7 +1962,7 @@ def rig_leg(upleg,loleg,foot,foottarget,relative_x_axis='X'):
     
     foot.parent = loleg
     
-    rig_target_affected(foottarget, foot, hard_rigidity=True)
+    rig_target_affected(foot_target, foot, hard_rigidity=True, use_rest_offset=True)
     
     
       

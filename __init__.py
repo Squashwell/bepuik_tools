@@ -592,7 +592,7 @@ class CreateControl(BEPUikAutoRigOperator,bpy.types.Operator):
             else:
                 if is_unique_bone_name(ob, new_target_name) and ebone.name not in bones_with_controls:
                     new_targets.append((ebone.name,new_target_name))
-                    riggenerator.rig_new_target(metabones, new_target_name, controlledmetabone=controlledmetabone, parent=root, headtotail=effective_head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation, lock_rotations_4d=self.lock_rotations_4d)
+                    riggenerator.rig_new_target(metabones, new_target_name, controlledmetabone=controlledmetabone, parent=root, headtotail=effective_head_tail, custom_shape_name=self.widget_name, scale=self.scale, lock_rotation=self.lock_rotation, lock_rotations_4d=self.lock_rotations_4d,use_rest_offset=True)
         
         if self.create_empties:
             bpy.ops.object.mode_set(toggle=False,mode='POSE')
