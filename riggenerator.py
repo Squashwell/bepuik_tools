@@ -133,6 +133,7 @@ WIDGET_FLOOR_TARGET_R = "widget floor target.R"
 WIDGET_TOES = "widget toes"
 WIDGET_STIFF_CIRCLE = "widget stiff circle"
 WIDGET_STIFF_TRIANGLE = "widget stiff triangle"
+WIDGET_STIFF_SWITCH = "widget stiff switch"
 
 class WidgetData():
     def __init__(self,vertices=[],edges=[],faces=[]):
@@ -291,6 +292,11 @@ num_verts = len(w.vertices)
 w.vertices.append((0,.1,-.1))
 w.vertices.append((0,1,-.1))
 w.edges.append((num_verts,num_verts+1))
+
+w = WIDGET_DATA_DEFAULTS[WIDGET_STIFF_SWITCH] = WidgetData()
+w.vertices = [(0,0,.25),(0,0,0),(0,1,0),(0,1,.25)]
+w.edges = [(0,1),(1,2),(2,3)]
+w.faces = []
 
 
 #w = WIDGET_DATA_DEFAULTS[WIDGET_FLOOR] = WidgetData()
@@ -1363,6 +1369,8 @@ def rig_full_body(meta_armature_obj,op=None):
     stiff_switch = mbs.new_bone("torso stiff switch")
     stiff_switch.head = chest.head.copy() + Vector((0,chest.length()/5,0))
     stiff_switch.tail = stiff_switch.head + Vector((0,chest.length()/5,0))
+    stiff_switch.custom_shape = widget_get(WIDGET_STIFF_SWITCH)
+    stiff_switch.show_wire = True
     stiff_switch.align_roll = Vector((0,0,1))
     stiff_switch.parent = chest
     stiff_switch.lock_location = (True,True,True)
