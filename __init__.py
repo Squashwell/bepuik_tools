@@ -50,7 +50,6 @@ if os.path.exists(debug_path):
 
 
 from bepuik_tools import riggenerator
-from bepuik_tools import utils
 
 from mathutils import Vector, geometry, Matrix
 
@@ -60,7 +59,7 @@ bl_info = {
     "name": "BEPUik Tools",
     "author": "Harrison Nordby, Ross Nordby",
     "version": (0, 3, 0),
-    "blender": (2, 7, 0),
+    "blender": (2, 70, 0),
     "description": "Automatically create humanoid BEPUik rigs and other rigging knickknacks.",
     "category": "Rigging" }
 

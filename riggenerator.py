@@ -28,7 +28,6 @@
 
 import bpy
 
-from bepuik_tools import utils
 from mathutils import Vector, Matrix, geometry
 
 import math
@@ -225,6 +224,33 @@ def pydata_get_vertices(obj):
 
 def pydata_get_faces(obj):
     return [[v for v in p.vertices] for p in obj.data.polygons]
+
+def quat_get_up(v):
+    w = v.w
+    x = v.x
+    y = v.y
+    z = v.z
+    return Vector(( 2 * (x * z + w * y), 
+                    2 * (y * x - w * x),
+                    1 - 2 * (x * x + y * y)))
+
+def quat_get_forward(v):
+    w = v.w
+    x = v.x
+    y = v.y
+    z = v.z
+    return Vector(( 2 * (x * y - w * z), 
+                    1 - 2 * (x * x + z * z),
+                    2 * (y * z + w * x)))
+
+def quat_get_right(v):
+    w = v.w
+    x = v.x
+    y = v.y
+    z = v.z
+    return Vector(( 1 - 2 * (y * y + z * z),
+                    2 * (x * y + w * z),
+                    2 * (x * z - w * y)))
 
 WIDGET_DATA_DEFAULTS = {}
 w = WIDGET_DATA_DEFAULTS[WIDGET_CUBE] = WidgetData()        
