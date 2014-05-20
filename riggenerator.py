@@ -1480,8 +1480,10 @@ def rig_full_body(meta_armature_obj,op=None):
             hand.bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
             hand.use_connect = True
             
-            antiparallel_limiter(loarm, hand, degrees=80)
-            rig_twist_limit(loarm, hand, twist=170)
+#            probably dont want these here because generally dont want to affect rest of arm when rotating
+#            hand
+#            antiparallel_limiter(loarm, hand, degrees=80)
+#            rig_twist_limit(loarm, hand, twist=170)
     
             width_between_tails = (palm_bones[0].tail - palm_bones[len(palm_bones) - 1].tail).length
             width_between_heads = (palm_bones[0].head - palm_bones[len(palm_bones) - 1].head).length
