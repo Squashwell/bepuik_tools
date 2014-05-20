@@ -482,7 +482,16 @@ class MetaBlenderConstraint():
                                             attr:%s
                                             val:%s""" % (pbone.name,constraint.name,attr_name,val))
                         
-        else:                
+        else:
+            if hasattr(constraint,"target"):
+                if not hasattr(self,"target"):
+                    constraint.target = bpy.context.object
+            
+            if hasattr(constraint,"subtarget"):
+                if not hasattr(self,"subtarget"):
+                    if hasattr(self,"connection_b"):
+                        constraint.subtarget = self.connection_b.name
+                        
             for attr_name in self_attr_names:
                 setattr(constraint,attr_name,getattr(self,attr_name))        
 
@@ -636,13 +645,11 @@ class MetaBone():
             
         mbc = MetaBlenderConstraint(type,name)
         
-        if type.startswith('BEPUIK_'):
-            mbc.connection_a = self
-            if targetmetabone:
-                mbc.connection_b = targetmetabone
-        else:
-            if targetmetabone:
-                mbc.subtarget = targetmetabone
+
+        mbc.connection_a = self
+        if targetmetabone:
+            mbc.connection_b = targetmetabone
+
         
         self.meta_blender_constraints.append(mbc)
         return mbc
