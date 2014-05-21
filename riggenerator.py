@@ -1690,6 +1690,7 @@ def rig_full_body(meta_armature_obj,op=None):
         eye.parent = head
         
         rig_arm(shoulder, uparm, loarm, relative_x_axis, up)
+        rig_new_target(mbs, name="loarm target.%s" % suffixletter, controlledmetabone=loarm, parent=root)
         rig_chest_to_shoulder(chest, shoulder, relative_x_axis) 
         rig_hand()
         
@@ -1751,7 +1752,7 @@ def rig_full_body(meta_armature_obj,op=None):
 
 
     
-def rig_new_target(metabonegroup,name,controlledmetabone,parent,scale=.10,headtotail=0,custom_shape_name= WIDGET_CUBE, lock_location=(False,False,False), lock_rotation_w = False, lock_rotation = (False,False,False), lock_rotations_4d=False, custom_widget_data = None, use_rest_offset=False):
+def rig_new_target(metabonegroup,name,controlledmetabone,parent,scale=.10,headtotail=0,custom_shape_name= WIDGET_CUBE, lock_location=(False,False,False), lock_rotation_w = False, lock_rotation = (False,False,False), lock_rotations_4d=False, custom_widget_data = None, use_rest_offset=True):
     
 #    puller_headtotail_offset = (controlledmetabone.tail.copy() - controlledmetabone.head.copy()) * headtotail
     
