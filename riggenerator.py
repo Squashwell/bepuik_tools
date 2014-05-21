@@ -1335,16 +1335,6 @@ def rig_full_body(meta_armature_obj,op=None):
     rig_swing_limit(spine, chest, 60)
     rig_swing_limit(chest, neck, 60)
     
-    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
-    c.axis_a = neck, 'Z'
-    c.axis_b = neck, 'Y'
-    c.max_swing = 100
-    
-    c = chest.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',neck)
-    c.axis_a = neck, 'X'
-    c.axis_b = neck, 'X'
-    c.max_swing = 10
-    
     neck.bepuik_rotational_heaviness = 20
     
     rig_swing_limit(neck, head, 80)
