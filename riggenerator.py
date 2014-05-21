@@ -1317,16 +1317,20 @@ def rig_full_body(meta_armature_obj,op=None):
     spine_defaults([hips,spine,chest,neck,head])
     chest.use_bepuik_always_solve = True
     
+    head.bepuik_rotational_heaviness = 30
+    
     neck.bbone_in = .7
     neck.bbone_out = 1
     neck.bbone_segments = 7
+    neck.bepuik_rotational_heaviness = 10
     
-    hips.bepuik_rotational_heaviness = 20
+    
+    hips.bepuik_rotational_heaviness = 12
     
     spine.bbone_segments = 8
     spine.bbone_in = 1
     spine.bbone_out = 1
-    spine.bepuik_rotational_heaviness = 40
+    spine.bepuik_rotational_heaviness = 14
     
     rig_twist_limit(hips, chest, twist=45)
     rig_twist_limit(chest, head, twist=100)
@@ -1334,8 +1338,6 @@ def rig_full_body(meta_armature_obj,op=None):
     rig_swing_limit(hips, spine, 60)
     rig_swing_limit(spine, chest, 60)
     rig_swing_limit(chest, neck, 60)
-    
-    neck.bepuik_rotational_heaviness = 20
     
     rig_swing_limit(neck, head, 80)
     
