@@ -61,7 +61,7 @@ bl_info = {
     "version": (0, 3, 0),
     "blender": (2, 70, 0),
     "description": "Automatically create humanoid BEPUik rigs and other rigging knickknacks.",
-    "location": "View3D > Tool Shelf > BEPUik",
+    "location": "View3D > Tool Shelf > BEPUik and View3D > Properties Shelf",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/User:Squashwell",
     "tracker_url": "https://github.com/Squashwell/bepuik_tools/issues",
