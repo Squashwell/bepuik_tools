@@ -1965,8 +1965,7 @@ def rig_leg(upleg,loleg,foot,foot_target,relative_x_axis='X'):
     #upleg to loleg connections
 
     
-    c = upleg.new_meta_blender_constraint('BEPUIK_REVOLUTE_JOINT',loleg)    
-    c.free_axis = upleg,'X'
+    rig_twist_limit(upleg, loleg, 10)
     
     antiparallel_limiter(upleg, loleg)
 
@@ -1977,22 +1976,19 @@ def rig_leg(upleg,loleg,foot,foot_target,relative_x_axis='X'):
     #the 85 here helps prevent knee locking
     c.max_swing = max(degrees_between(loleg,-upleg.z_axis()),85)
     
+    c = upleg.new_meta_blender_constraint('BEPUIK_SWIVEL_HINGE_JOINT',loleg)
+    c.hinge_axis = upleg, relative_x_axis
+    c.twist_axis = loleg, 'Y'
+    
     loleg.parent = upleg
     
     #loleg to foot connections
-    c = loleg.new_meta_blender_constraint('BEPUIK_TWIST_JOINT',foot)
-    c.axis_a = foot, 'Y'
-    c.axis_b = foot, 'Y'
+    rig_twist_limit(loleg, foot, 10)
 
     c = loleg.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',foot)
     c.axis_a = foot, 'Y'
     c.axis_b = foot, 'Y'
     c.max_swing = 75
-
-    c = loleg.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',foot)
-    c.axis_a = loleg, relative_x_axis
-    c.axis_b = loleg, relative_x_axis
-    c.max_swing = 45
     
     foot.parent = loleg
     
