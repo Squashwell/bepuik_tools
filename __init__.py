@@ -26,8 +26,6 @@
 #======================= END GPL LICENSE BLOCK ========================
 from bepuik_tools.riggenerator import WIDGET_CUBE
 
-#TODO: wiki: Peripheral bones are: bones which are not controlled and have no controlled descendants
-
 import os
 import sys
 import bpy
@@ -35,19 +33,6 @@ import math
 from bpy.app.handlers import persistent
 import bgl
 import blf
-
-debug_path = "%s/release/scripts/addons/bepuik_tools/pydev_debug.py" % os.path.dirname(bpy.app.binary_path)
-if os.path.exists(debug_path):
-    print("BEPUik: attempting to run pydev debug...")
-    from bepuik_tools import pydev_debug
-    try:    
-        pydev_debug.debug()
-        dbgm = pydev_debug.dbgm
-    except:
-        print("... failed.")
-        pass
-
-
 
 from bepuik_tools import riggenerator
 
@@ -65,7 +50,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/User:Squashwell",
     "tracker_url": "https://github.com/Squashwell/bepuik_tools/issues",
-    "category": "Rigging" }
+    "category": "Rigging"}
 
 def get_armature_ob(context):
     if context.object:
