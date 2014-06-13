@@ -43,7 +43,7 @@ from bpy.props import EnumProperty, FloatProperty, StringProperty, BoolProperty,
 bl_info = {
     "name": "BEPUik Tools",
     "author": "Harrison Nordby, Ross Nordby",
-    "version": (0, 3, 0),
+    "version": (0, 3, 1),
     "blender": (2, 70, 0),
     "description": "Automatically create humanoid BEPUik rigs and other rigging knickknacks.",
     "location": "View3D > Tool Shelf > BEPUik and View3D > Properties Shelf",
