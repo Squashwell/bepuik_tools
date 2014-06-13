@@ -640,6 +640,17 @@ class MetaBone():
             meta_blender_constraint.apply_data_to_pchan(pchan)
             
     def new_meta_blender_constraint(self,type,targetmetabone=None,name=None):
+        """
+
+        :arg type: type of blender constraint
+        :type type: str
+        :arg targetmetabone: other bone being targed by this constraint
+        :type targetmetabone: MetaBone
+        :arg name: name of new meta blender constraint, which will be applied to the final blender constraint
+        :type name: str
+        :return: a new MetaBlenderConstraint
+        :rtype: MetaBlenderConstraint
+        """
         if not name:
             name = "%s %s" % (type.lower().replace("_"," "),len(self.meta_blender_constraints)+1)
             
@@ -1412,9 +1423,11 @@ def rig_full_body(meta_armature_obj,op=None):
     def rig_side(suffixletter):
         if suffixletter=="L":
             relative_x_axis = 'X'
+            leg_relative_x_axis = 'NEGATIVE_X'
             measurement_axis_mat = hips_forward_mat * Matrix.Rotation(math.pi/5,4,'Z')
         else:
             relative_x_axis = 'NEGATIVE_X'
+            leg_relative_x_axis = 'X'
             measurement_axis_mat = hips_forward_mat * Matrix.Rotation(-math.pi/5,4,'Z')
         
         loleg = mbs["loleg.%s" % suffixletter]
@@ -1565,7 +1578,7 @@ def rig_full_body(meta_armature_obj,op=None):
             else:
                 foot_width_world = foot.length()/2
                 
-            #the foot width bone is only needed as a reference for single toed characters, after its used
+            #the foot width bone is only needed as a reference for single toed characters, after it's used
             #delete it because the final rig doesn't need it.
             if foot_width_bone:
                 del mbs[foot_width_bone.name]
@@ -1685,15 +1698,14 @@ def rig_full_body(meta_armature_obj,op=None):
         rig_new_target(mbs, name="loarm target.%s" % suffixletter, controlledmetabone=loarm, parent=root)
         rig_chest_to_shoulder(chest, shoulder, relative_x_axis) 
         rig_hand()
-        
-        
+
         foot_target.parent = root
-        rig_leg(upleg, loleg, foot, foot_target, relative_x_axis)
+        rig_leg(upleg, loleg, foot, foot_target, leg_relative_x_axis)
                                
         rig_foot()
 
         measure = mbs.new_bone("MCH-leg twist measure axis.%s" % suffixletter,transform=measurement_axis_mat)
-        rig_hips_to_upleg(hips, upleg, hips, measure, relative_x_axis)
+        rig_hips_to_upleg(hips, upleg, hips, measure, leg_relative_x_axis)
 
 
 
@@ -1782,8 +1794,21 @@ def flag_bone_mechanical(mechanical_bone):
     
     if not mechanical_bone.name.startswith("MCH-"):
         mechanical_bone.name = "MCH-%s" % mechanical_bone.name
-   
-def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,relative_x_axis):
+
+
+def rig_hips_to_upleg(hips, upleg, upleg_parent, measurement_axis, relative_x_axis):
+    """
+    :arg hips:
+    :type hips: MetaBone
+    :arg upleg:
+    :type upleg: MetaBone
+    :arg upleg_parent:
+    :type upleg_parent: MetaBone
+    :arg measurement_axis:
+    :type measurement_axis: MetaBone
+    :arg relative_x_axis: either 'X' or 'NEGATIVE_X'
+    :type relative_x_axis: str
+    """
     flag_bone_mechanical(measurement_axis)
     measurement_axis.parent = hips
     
@@ -1791,13 +1816,12 @@ def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,relative_x_axis):
     upleg.parent = upleg_parent
     upleg.use_bepuik_always_solve = True
     
-    c = hips.new_meta_blender_constraint('BEPUIK_TWIST_LIMIT',upleg)
-    c.axis_a = hips, 'NEGATIVE_Y'
-    c.axis_b = upleg, 'Y'
+    c = hips.new_meta_blender_constraint('BEPUIK_TWIST_LIMIT', upleg, name="%s twist limit" % upleg.name)
+    c.axis_a = hips, 'Y'
+    c.axis_b = hips, 'Y'
     c.measurement_axis_a = measurement_axis, 'Y'
-    c.measurement_axis_b = upleg, 'Z'
-    #TODO: this might not be enough twist for sitting feet soles together knees down
-    c.max_twist = max(80,degrees_between(upleg.z_axis(), measurement_axis)+2)
+    c.measurement_axis_b = hips, 'Z'
+    c.max_twist = 120
     
     if upleg_parent == hips:
         flag_bone_deforming_ballsocket_bepuik(upleg)
@@ -1807,20 +1831,20 @@ def rig_hips_to_upleg(hips,upleg,upleg_parent,measurement_axis,relative_x_axis):
         c.anchor = upleg, 0
 
     #prevent leg from going too far up
-    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
-    c.axis_a = hips, 'NEGATIVE_Y'
+    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', upleg, name="%s swing up limit" % upleg.name)
+    c.axis_a = upleg, 'Y'
     c.axis_b = upleg, 'Y'
     c.max_swing = 120
     
     #prevent leg from going too far back
-    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
-    c.axis_a = hips, 'Z'
+    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', upleg, name="%s swing back limit" % upleg.name)
+    c.axis_a = upleg, 'Z'
     c.axis_b = upleg, 'Y'
-    c.max_swing = 130
+    c.max_swing = 165
     
     #prevent leg from going too far to the opposite side
-    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',upleg)
-    c.axis_a = hips, relative_x_axis
+    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', upleg, name="%s swing side limit" % upleg.name)
+    c.axis_a = upleg, relative_x_axis
     c.axis_b = upleg, 'Y'
     c.max_swing = 110
 
