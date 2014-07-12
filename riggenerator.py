@@ -1923,34 +1923,21 @@ def rig_new_target(metabonegroup, name, controlledmetabone, parent, scale=.10, h
                    custom_shape_name=WIDGET_CUBE, lock_location=(False, False, False), lock_rotation_w=False,
                    lock_rotation=(False, False, False), lock_rotations_4d=False, custom_widget_data=None,
                    use_rest_offset=True):
-    #    puller_headtotail_offset = (controlledmetabone.tail.copy() - controlledmetabone.head.copy()) * headtotail
-
-    #    direction = controlledmetabone.tail - controlledmetabone.head
-    #    direction = direction.normalized()
-    #    l = (controlledmetabone.tail-controlledmetabone.head).length
-    #    v = direction * scale * l
-    #    if v.length < min_size:
-    #        v = direction * min_size
-
-    #    metabonegroup = MetaBoneDict()
-    pullermetabone = metabonegroup.new_bone_by_fraction(name=name, source_metabone=controlledmetabone,
+    targetmetabone = metabonegroup.new_bone_by_fraction(name=name, source_metabone=controlledmetabone,
                                                         start_fraction=headtotail, end_fraction=headtotail + scale)
 
-    #    pullermetabone.head = controlledmetabone.head + puller_headtotail_offset
-    #    pullermetabone.tail = pullermetabone.head + v
-    #    pullermetabone.roll = controlledmetabone.roll
-    pullermetabone.parent = parent
-    pullermetabone.show_wire = True
-    pullermetabone.custom_shape = widgetdata_get(custom_shape_name, custom_widget_data)
-    pullermetabone.lock_scale = (True, True, True)
-    pullermetabone.lock_rotation_w = lock_rotation_w
-    pullermetabone.lock_rotation = lock_rotation
-    pullermetabone.lock_rotations_4d = lock_rotations_4d
-    pullermetabone.lock_location = lock_location
+    targetmetabone.parent = parent
+    targetmetabone.show_wire = True
+    targetmetabone.custom_shape = widgetdata_get(custom_shape_name, custom_widget_data)
+    targetmetabone.lock_scale = (True, True, True)
+    targetmetabone.lock_rotation_w = lock_rotation_w
+    targetmetabone.lock_rotation = lock_rotation
+    targetmetabone.lock_rotations_4d = lock_rotations_4d
+    targetmetabone.lock_location = lock_location
 
-    rig_target_affected(pullermetabone, controlledmetabone, headtotail=headtotail, use_rest_offset=use_rest_offset)
+    rig_target_affected(targetmetabone, controlledmetabone, headtotail=headtotail, use_rest_offset=use_rest_offset)
 
-    return pullermetabone
+    return targetmetabone
 
 
 def flag_bone_mechanical(mechanical_bone):
