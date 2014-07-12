@@ -1722,9 +1722,21 @@ def rig_full_body(meta_armature_obj, op=None):
                 rig_finger(hand, s1, s2, s3, s4, align_rolls[f - 1])
 
                 if s1.swing:
-                    rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter), controlledmetabone=s1,
+                    rot_target = rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter), controlledmetabone=s1,
                                    parent=hand_target, lock_location=(True, True, True), lock_rotation_w=True,
                                    lock_rotation=(False, True, True), lock_rotations_4d=False)
+
+                    #limiting the location negates the "Inactive Targets Follow" effect, which doesn't make sense for
+                    #this target
+                    mbc = rot_target.new_meta_blender_constraint('LIMIT_LOCATION')
+                    mbc.use_min_x = True
+                    mbc.use_max_x = True
+                    mbc.use_min_y = True
+                    mbc.use_max_y = True
+                    mbc.use_min_z = True
+                    mbc.use_max_z = True
+                    mbc.owner_space = 'LOCAL'
+                    mbc.use_transform_limit = True
 
         def rig_foot():
             def fs(f, s):
