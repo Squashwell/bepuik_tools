@@ -1392,10 +1392,18 @@ def rig_target_affected(target, affected, headtotail=0, position_rigidity=0, ori
 
 
 def rig_twist_limit(a, b, twist):
+    """
+    create a twist limit with metabone b as the basis for everything
+
+    :param a: a target
+    :param b: b target
+    :param twist: twist amount
+    :return: twist limit meta blender constraint
+    """
     c = a.new_meta_blender_constraint('BEPUIK_TWIST_LIMIT', b)
-    c.axis_a = a, 'Y'
+    c.axis_a = b, 'Y'
     c.axis_b = b, 'Y'
-    c.measurement_axis_a = a, 'Z'
+    c.measurement_axis_a = b, 'Z'
     c.measurement_axis_b = b, 'Z'
     c.max_twist = twist
 
@@ -2138,8 +2146,6 @@ def rig_leg(upleg, loleg, foot, foot_target, relative_x_axis='X'):
     foot.bepuik_ball_socket_rigidity = 200
 
     #upleg to loleg connections
-
-
     rig_twist_limit(upleg, loleg, 10)
 
     antiparallel_limiter(upleg, loleg)
@@ -2151,68 +2157,18 @@ def rig_leg(upleg, loleg, foot, foot_target, relative_x_axis='X'):
     c.max_swing = max(degrees_between(loleg, -upleg.z_axis()), 85)
 
     c = upleg.new_meta_blender_constraint('BEPUIK_SWIVEL_HINGE_JOINT', loleg)
-    c.hinge_axis = upleg, relative_x_axis
+    c.hinge_axis = loleg, relative_x_axis
     c.twist_axis = loleg, 'Y'
 
     loleg.parent = upleg
 
     #loleg to foot connections
     rig_twist_limit(loleg, foot, 10)
-
-    c = loleg.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', foot)
-    c.axis_a = foot, 'Y'
-    c.axis_b = foot, 'Y'
-    c.max_swing = 75
+    rig_swing_limit(loleg, foot, 75)
 
     foot.parent = loleg
 
     rig_target_affected(foot_target, foot, hard_rigidity=True, use_rest_offset=True)
-
-
-def rig_twistproxy(metabonegroup, obj, name, parent, twistproxytarget, bbone_segments, align_roll, bbone_in=1,
-                   bbone_out=1):
-    twist = metabonegroup.new_bone_by_fraction(name, twistproxytarget, 0, 1)
-    twist.use_bepuik = False
-    twist.use_deform = True
-    twist.parent = parent
-    twist.bbone_segments = bbone_segments
-    twist.bbone_out = bbone_in
-    twist.bbone_in = bbone_out
-    twist.align_roll = align_roll.copy()
-
-    c = twist.abc(type='COPY_ROTATION')
-    c.target = obj
-    c.subtarget = twistproxytarget
-    c.target_space = 'LOCAL'
-    c.owner_space = 'LOCAL'
-
-    return twist
-
-
-#def init_rig_twistproxy_with_anchor(metabonegroup,obj,name,twiststarttarget,twistanchortarget,bbone_segments,align_roll):    
-#        twist = metabonegroup.new_bone_by_fraction(name,twiststarttarget,0,1)
-#        twist.use_bepuik = False
-#        twist.use_deform = True
-#        twist.parent = twiststarttarget
-#        twist.use_connect = False
-#        twist.bbone_segments = bbone_segments
-#        twist.bbone_out = 0
-#        twist.bbone_in = 0 
-#        twist.align_roll = align_roll.copy()
-
-def rig_twistanchor(metabonegroup, obj, name, parent, twistanchortarget, align_roll):
-    anchor = metabonegroup.new_bone_by_fraction("%s anchor" % name, twistanchortarget, 0, .1)
-    anchor.use_bepuik = False
-    anchor.use_deform = False
-    anchor.parent = parent
-    anchor.align_roll = align_roll.copy()
-    c = anchor.abc(type='COPY_ROTATION')
-    c.target = obj
-    c.subtarget = twistanchortarget
-    c.target_space = 'LOCAL'
-    c.owner_space = 'LOCAL'
-
-    return anchor
 
 
 def flag_bone_deforming_ballsocket_bepuik(metabone):
@@ -2245,22 +2201,7 @@ def rig_arm(shoulder, uparm, loarm, relative_x_axis, up=Vector((0, 0, 1))):
 
     antiparallel_limiter(shoulder, uparm, 30)
 
-    #    c = shoulder.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',uparm)
-    #    c.axis_a = shoulder, 'NEGATIVE_Z'
-    #    c.axis_b = uparm, 'Y'
-    #    c.max_swing = max(90,degrees_between(-shoulder.z_axis(), uparm) + 1)
-
-    #    c = shoulder.new_meta_blender_constraint('BEPUIK_SWING_LIMIT',uparm)
-    #    c.axis_a = uparm, relative_x_axis
-    #    c.axis_b = uparm, 'Y'
-    #    c.max_swing = 90
-
-    c = shoulder.new_meta_blender_constraint('BEPUIK_TWIST_LIMIT', uparm)
-    c.axis_a = shoulder, 'Y'
-    c.axis_b = uparm, 'Y'
-    c.measurement_axis_a = shoulder, 'Z'
-    c.measurement_axis_b = shoulder, 'Z'
-    c.max_twist = 100
+    rig_twist_limit(shoulder, uparm, 100)
 
     c = uparm.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', loarm)
     c.axis_a = loarm, relative_x_axis
