@@ -1464,20 +1464,17 @@ def rig_full_body(meta_armature_obj, op=None):
 
     jaw.use_deform = True
     jaw.lock_location = (True, True, True)
-    jaw.align_roll = Vector((0, 0, 1))
     jaw.parent = head
 
     def rig_rib(rib):
         rib.parent = chest
         rib.use_deform = True
-        rib.align_roll = Vector((0, -1, 0))
 
     def spine_defaults(bone_list):
         prev_bone = None
         for bone in bone_list:
             bone.use_deform = True
             bone.use_bepuik = True
-            bone.align_roll = Vector((0, -1, 0))
 
             if prev_bone:
                 bone.use_connect = True
@@ -1642,15 +1639,16 @@ def rig_full_body(meta_armature_obj, op=None):
             hand.parent = loarm
             hand.head = loarm.tail.copy()
             hand.tail = sum_vectors([s2.tail for s2 in s2_bones]) / len(s2_bones)
-            hand.align_roll = up.copy()
+
+            if meta_armature_obj.bepuik_autorig.use_thumb and len(palm_bones) > 1:
+                aligner_bones = palm_bones[1:]
+            else:
+                aligner_bones = palm_bones
+
+            hand.align_roll = sum_vectors([p.align_roll for p in aligner_bones]) / len(aligner_bones)
             hand.use_bepuik = True
             hand.bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
             hand.use_connect = True
-
-            #            probably dont want these here because generally dont want to affect rest of arm when rotating
-            #            hand
-            #            antiparallel_limiter(loarm, hand, degrees=80)
-            #            rig_twist_limit(loarm, hand, twist=170)
 
             width_between_tails = (palm_bones[0].tail - palm_bones[len(palm_bones) - 1].tail).length
             width_between_heads = (palm_bones[0].head - palm_bones[len(palm_bones) - 1].head).length
@@ -1676,16 +1674,11 @@ def rig_full_body(meta_armature_obj, op=None):
             hand_target.tail = hand.tail.copy()
             hand_target.custom_shape = widget_get(hand_target_custom_shape_name)
             hand_target.show_wire = True
+            hand_target.align_roll = hand.align_roll.copy()
 
             rig_target_affected(hand_target, hand, position_rigidity=1, orientation_rigidity=1)
 
             s1_swings = [0, 0, 0, 3, 3]
-
-            if meta_armature_obj.bepuik_autorig.use_thumb:
-                align_rolls = [forward, up, up, up, up]
-
-            else:
-                align_rolls = [up, up, up, up, up]
 
             for f in range(1, 6):
                 s1 = fs(f, 1)
@@ -1719,7 +1712,7 @@ def rig_full_body(meta_armature_obj, op=None):
                     s4.swing_angle_max = 45
                     s4.swing_angle_min = -95
 
-                rig_finger(hand, s1, s2, s3, s4, align_rolls[f - 1])
+                rig_finger(hand, s1, s2, s3, s4)
 
                 if s1.swing:
                     rot_target = rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter), controlledmetabone=s1,
@@ -1782,6 +1775,7 @@ def rig_full_body(meta_armature_obj, op=None):
             toes_target.tail = final_segments_tail_average.copy()
             toes_target.tail = toes_target.head + (foot_target.y_axis() * toes_target.length())
             toes_target.parent = root
+            toes_target.align_roll = sum_vectors([s1.align_roll for s1 in s1_bones]) / len(s1_bones)
 
             toes_width_local = foot_width_world / toes_target.length()
 
@@ -1858,7 +1852,7 @@ def rig_full_body(meta_armature_obj, op=None):
                 rig_twist_joint(foot, s1)
                 rig_ballsocket_joint(foot, s1)
                 rig_bone_to_bone_with_2d_swing_info(foot, s1, axis_a_override=s1)
-                rig_toe(s1, s2, s3, align_roll=Vector((0, 0, 1)))
+                rig_toe(s1, s2, s3)
                 s1.parent = foot
 
             for multitarget_segment in multitarget_segments:
@@ -1870,7 +1864,6 @@ def rig_full_body(meta_armature_obj, op=None):
         #generally progress from head downward...
         eye.new_meta_blender_constraint('DAMPED_TRACK', eye_target)
         eye.use_deform = True
-        eye.align_roll = Vector((0, 0, 1))
         eye.parent = head
 
         rig_arm(shoulder, uparm, loarm, relative_x_axis, up)
@@ -2067,12 +2060,7 @@ def rig_bone_to_bone_with_2d_swing_info(a, b, axis_a_override=None):
         c.max_swing = b.swing_x
 
 
-def rig_finger(hand, s1, s2, s3, s4, align_roll):
-    hand.align_roll = align_roll.copy()
-    s1.align_roll = align_roll.copy()
-    s2.align_roll = align_roll.copy()
-    s3.align_roll = align_roll.copy()
-    s4.align_roll = align_roll.copy()
+def rig_finger(hand, s1, s2, s3, s4):
 
     s1.parent = hand
 
@@ -2118,14 +2106,12 @@ def rig_finger(hand, s1, s2, s3, s4, align_roll):
     s4.parent = s3
 
 
-def rig_toe(s1, s2, s3, align_roll):
-    s1.align_roll = align_roll.copy()
+def rig_toe(s1, s2, s3):
     flag_bone_deforming_ballsocket_bepuik(s1)
 
     if s2:
         s2.use_connect = True
         s2.parent = s1
-        s2.align_roll = align_roll.copy()
 
         rig_twist_joint(s1, s2)
         rig_bone_to_bone_with_swing_center_info(s1, s2)
@@ -2134,7 +2120,6 @@ def rig_toe(s1, s2, s3, align_roll):
     if s3:
         s3.use_connect = True
         s3.parent = s2
-        s3.align_roll = align_roll.copy()
 
         rig_twist_joint(s2, s3)
         rig_bone_to_bone_with_swing_center_info(s2, s3)
@@ -2142,15 +2127,12 @@ def rig_toe(s1, s2, s3, align_roll):
 
 
 def rig_leg(upleg, loleg, foot, foot_target, relative_x_axis='X'):
-    upleg.align_roll = Vector((0, -1, 0))
     flag_bone_deforming_ballsocket_bepuik(upleg)
 
-    loleg.align_roll = Vector((0, -1, 0))
     flag_bone_deforming_ballsocket_bepuik(loleg)
     loleg.use_connect = True
     loleg.bepuik_ball_socket_rigidity = 50
 
-    foot.align_roll = Vector((0, 0, 1))
     flag_bone_deforming_ballsocket_bepuik(foot)
     foot.use_connect = True
     foot.bepuik_ball_socket_rigidity = 200
@@ -2247,20 +2229,17 @@ def antiparallel_limiter(a, b, degrees=20):
 
 
 def rig_arm(shoulder, uparm, loarm, relative_x_axis, up=Vector((0, 0, 1))):
-    shoulder.align_roll = up.copy()
     shoulder.use_bepuik = True
     shoulder.use_deform = True
     shoulder.bepuik_ball_socket_rigidity = 0
     shoulder.bepuik_rotational_heaviness = 35
 
-    uparm.align_roll = up.copy()
     uparm.use_connect = True
     flag_bone_deforming_ballsocket_bepuik(uparm)
 
     loarm.bbone_segments = 32
     loarm.bbone_out = 0
     loarm.bbone_in = 0
-    loarm.align_roll = up.copy()
     loarm.use_connect = True
     flag_bone_deforming_ballsocket_bepuik(loarm)
 

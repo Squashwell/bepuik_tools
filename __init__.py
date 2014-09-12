@@ -365,7 +365,7 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
     wrist_pitch = FloatProperty(name="Wrist Pitch", description="The pitch angle of the character's wrist",
                                 default=math.radians(.7), subtype='ANGLE')
     wrist_roll = FloatProperty(name="Wrist Roll", description="The roll angle of the character's wrist",
-                               default=math.radians(5.2), subtype='ANGLE')
+                               default=0, subtype='ANGLE')
 
     finger_splay = FloatProperty(name="Finger Splay",
                                  description="The amount the fingers are splayed out by default",
