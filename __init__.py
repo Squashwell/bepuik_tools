@@ -210,6 +210,7 @@ class BEPUikAutoRigPivotHeel(BEPUikAutoRigOperator, bpy.types.Operator):
         constraint.use_hard_rigidity = True
 
         foot_target.bone.select = True
+        ob.data.bones.active = foot_target.bone
 
         floor_target = get_bone(pchans, "foot floor target", self.suffix)
 
@@ -256,6 +257,8 @@ class BEPUikAutoRigPivotToes(BEPUikAutoRigOperator, bpy.types.Operator):
                 constraint.use_hard_rigidity = True
 
         foot_ball_target.bone.select = True
+        ob.data.bones.active = foot_ball_target.bone
+
 
         floor_target = get_bone(pchans, "foot floor target", self.suffix)
         if floor_target:
