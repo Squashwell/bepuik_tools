@@ -1658,9 +1658,10 @@ def rig_full_body(meta_armature_obj, op=None):
             hand.bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
             hand.use_connect = True
 
-            width_between_tails = (palm_bones[0].tail - palm_bones[len(palm_bones) - 1].tail).length
-            width_between_heads = (palm_bones[0].head - palm_bones[len(palm_bones) - 1].head).length
+            width_between_tails = max((palm_bones[0].tail - palm_bones[len(palm_bones) - 1].tail).length, palm_bones[0].length()/2)
+            width_between_heads = max((palm_bones[0].head - palm_bones[len(palm_bones) - 1].head).length, palm_bones[0].length()/2)
             hand_width_world = max(width_between_heads, width_between_tails)
+
 
             hand_width_local = hand_width_world / hand.length()
 
