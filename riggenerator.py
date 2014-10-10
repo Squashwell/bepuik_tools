@@ -1842,7 +1842,7 @@ def rig_full_body(meta_armature_obj, op=None):
                 #                tail_affected_by_floor(s1)
 
                 s1.swing_x = 20
-                s1.swing_y = 45
+                s1.swing_y = 90
 
                 if s2:
                     s2.swing_center = fssc(f, 2)
