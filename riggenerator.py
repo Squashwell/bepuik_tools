@@ -10,7 +10,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-#  You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
@@ -1045,40 +1045,69 @@ class MetaBonesBakeData():
         self.transform = transform
 
 
+def translation4(vec):
+    return Matrix.Translation(vec).to_4x4()
+
+
 def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wrist_yaw, wrist_pitch, wrist_roll,
-                          use_thumb, finger_curl, toe_curl, finger_splay, thumb_splay, thumb_tilt, shoulder_head_vec,
-                          shoulder_tail_vec, elbow_vec, wrist_vec, spine_start_vec, spine_lengths, upleg_vec, knee_vec,
-                          ankle_vec, toe_vec, eye_center, eye_radius, chin_vec, jaw_vec, use_simple_toe):
-    mat_larm = Matrix.Identity(4)
+                          use_thumb, finger_curl, toe_curl, finger_splay, thumb_splay, thumb_tilt, arm_yaw,
+                          arm_pitch, arm_roll, shoulder_head_vec,
+                          shoulder_tail_vec, elbow_vec, wrist_vec, spine_start_vec, spine_pitch, spine_lengths,
+                          upleg_vec, knee_vec,
+                          ankle_vec, toe_vec, head_length, head_pitch, eye_center, eye_radius, chin_vec, jaw_vec,
+                          use_simple_toe):
+    spine_meta = meta_init_spine(spine_lengths)
+    spine_mat = translation4(spine_start_vec) * Matrix.Rotation(spine_pitch, 4, 'X')
 
-    flip = Matrix.Scale(-1, 4, Vector((1, 0, 0)))
-    mat_lleg = Matrix.Identity(4)
-    mat_rleg = flip * mat_lleg
-    mat_rarm = flip * mat_larm
+    shoulder_meta = meta_init_shoulder(shoulder_tail_vec)
+    shoulder_mat = spine_mat * translation4(shoulder_head_vec)
 
-    arm_meta = meta_init_arm(shoulder_head_vec, shoulder_tail_vec, elbow_vec, wrist_vec)
-    leg_meta = meta_init_leg(upleg_vec, knee_vec, ankle_vec, toe_vec, foot_width)
-    spine_meta = meta_init_spine(spine_start_vec, spine_lengths)
+    arm_meta = meta_init_uparm_loarm(shoulder_meta["shoulder"], elbow_vec, wrist_vec)
+    arm_mat = shoulder_mat * \
+              translation4(shoulder_meta["shoulder"].tail) * \
+              Matrix.Rotation(arm_yaw, 4, 'Z') * \
+              Matrix.Rotation(arm_pitch, 4, 'X') * \
+              Matrix.Rotation(arm_roll, 4, 'Y')
+
     fingers_meta = meta_init_fingers(num_fingers, finger_curl, wrist_width, use_thumb, finger_splay, thumb_splay,
                                      thumb_tilt)
+    fingers_mat = arm_mat * \
+                  translation4(arm_meta["loarm"].tail) * \
+                  Matrix.Rotation(wrist_yaw, 4, 'Z') * \
+                  Matrix.Rotation(wrist_pitch, 4, 'X') * \
+                  Matrix.Rotation(wrist_roll, 4, 'Y')
+
+    leg_meta = meta_init_leg(upleg_vec, knee_vec, ankle_vec, toe_vec, foot_width)
+    leg_mat = Matrix.Identity(4)
+
     toes_meta = meta_init_toes(num_toes, toe_curl, foot_width, use_simple_toe)
-    face_meta = meta_init_face(eye_center, eye_radius, chin_vec, jaw_vec)
+    toes_mat = leg_mat * translation4(leg_meta["foot"].tail) * Matrix.Rotation(math.pi, 4, 'Z')
 
-    mat_arm_to_fingers = Matrix.Translation(Vector(arm_meta["loarm"].tail)).to_4x4()
-    mat_leg_to_toes = Matrix.Translation(Vector(leg_meta["foot"].tail)).to_4x4()
+    head_meta = meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec)
+    head_mat = spine_mat * translation4(spine_meta["neck"].tail) * Matrix.Rotation(head_pitch, 4, 'X')
 
-    mat_fingers = Matrix.Rotation(wrist_yaw, 4, 'Z') * Matrix.Rotation(wrist_pitch, 4, 'X') * Matrix.Rotation(
-        wrist_roll, 4, 'Y')
-    mat_toes = Matrix.Rotation(math.pi, 4, 'Z')
+    flip = Matrix.Scale(-1, 4, Vector((1, 0, 0)))
 
-    bakedata_list = [MetaBonesBakeData(arm_meta, mat_larm, 'L'), MetaBonesBakeData(arm_meta, mat_rarm, 'R'),
-                     MetaBonesBakeData(leg_meta, mat_lleg, 'L'), MetaBonesBakeData(leg_meta, mat_rleg, 'R'),
-                     MetaBonesBakeData(spine_meta, Matrix.Identity(4)),
-                     MetaBonesBakeData(face_meta, Matrix.Identity(4)),
-                     MetaBonesBakeData(fingers_meta, mat_larm * mat_arm_to_fingers * mat_fingers, 'L'),
-                     MetaBonesBakeData(fingers_meta, mat_rarm * mat_arm_to_fingers * mat_fingers, 'R'),
-                     MetaBonesBakeData(toes_meta, mat_lleg * mat_leg_to_toes * mat_toes, 'L'),
-                     MetaBonesBakeData(toes_meta, mat_rleg * mat_leg_to_toes * mat_toes, 'R')]
+
+    # bakedata_list = [MetaBonesBakeData(arm_meta, arm_mat, 'L'), MetaBonesBakeData(arm_meta, flip * arm_mat, 'R'),
+    #                  MetaBonesBakeData(leg_meta, leg_mat, 'L'), MetaBonesBakeData(leg_meta, flip * leg_mat, 'R'),
+    #                  MetaBonesBakeData(spine_meta, spine_mat),
+    #                  MetaBonesBakeData(head_meta, head_mat),
+    #                  MetaBonesBakeData(fingers_meta, fingers_mat, 'L'),
+    #                  MetaBonesBakeData(fingers_meta, flip * fingers_mat, 'R'),
+    #                  MetaBonesBakeData(toes_meta, toes_mat, 'L'),
+    #                  MetaBonesBakeData(toes_meta, flip * toes_mat, 'R')]
+
+    bakedata_list = [MetaBonesBakeData(spine_meta, spine_mat), MetaBonesBakeData(head_meta, head_mat)]
+
+
+    for mat, suffixletter in (Matrix.Identity(4), "L"), (flip, "R"):
+        side = [MetaBonesBakeData(shoulder_meta, mat * shoulder_mat, suffixletter),
+                MetaBonesBakeData(arm_meta, mat * arm_mat, suffixletter),
+                MetaBonesBakeData(fingers_meta, mat * fingers_mat, suffixletter),
+                MetaBonesBakeData(leg_meta, mat * leg_mat, suffixletter),
+                MetaBonesBakeData(toes_meta, mat * toes_mat, suffixletter)]
+        bakedata_list.extend(side)
 
     #    testleft = MetaBoneDict()
     #    b = testleft.new_bone("test")
@@ -1107,27 +1136,34 @@ def meta_init_faceside(eye_center, eye_radius):
     return metabones
 
 
-def meta_init_face(eye_center, eye_radius, chin_vec, jaw_vec):
+def meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec):
     face_side_meta = meta_init_faceside(eye_center, eye_radius)
 
     bakedata_list = [MetaBonesBakeData(face_side_meta, Matrix.Identity(4), 'L'),
                      MetaBonesBakeData(face_side_meta, Matrix.Scale(-1, 4, Vector((1, 0, 0))), 'R')]
     combined_metabones = MetaBoneDict.from_bakedata(bakedata_list)
 
-    b = combined_metabones.new_bone('jaw')
-    b.head = jaw_vec.copy()
-    b.tail = chin_vec.copy()
-    b.use_connect = False
+    head = combined_metabones.new_bone('head')
+    head.head = Vector((0, 0, 0))
+    head.tail = Vector((0, 0, head_length))
+    head.align_roll = Vector((0,-1,0))
+    head.use_connect = True
+
+    jaw = combined_metabones.new_bone('jaw')
+    jaw.head = jaw_vec.copy()
+    jaw.tail = chin_vec.copy()
+    jaw.use_connect = False
+    jaw.parent = head
 
     return combined_metabones
 
 
-def meta_init_spine(spine_start_vec, spine_lengths):
+def meta_init_spine(spine_lengths):
     mbg = MetaBoneDict()
 
-    bone_names = ["hips", "spine", "chest", "neck", "head"]
+    bone_names = ["hips", "spine", "chest", "neck"]
 
-    v = spine_start_vec.copy()
+    v = Vector((0, 0, 0))
 
     def get_prev_bone_by_spine_length_index(i):
         if i - 1 >= 0:
@@ -1164,35 +1200,54 @@ def meta_init_spine(spine_start_vec, spine_lengths):
     return mbg
 
 
-def meta_init_arm(shoulder_head_vec, shoulder_tail_vec, elbow_vec, wrist_vec):
+def meta_init_shoulder(shoulder_tail_vec):
     mbg = MetaBoneDict()
 
-    arm_vec = wrist_vec - shoulder_tail_vec
+    # arm_vec = wrist_vec - shoulder_tail_vec
 
-    arm_up_vec = arm_vec.cross(Vector((0, 1, 0)))
+    # arm_up_vec = arm_vec.cross(Vector((0, 1, 0)))
 
-    new_elbow_vec = (elbow_vec[0] * arm_vec) + shoulder_tail_vec
-
-    new_elbow_vec[1] += (elbow_vec[1] * arm_vec.length)
+    # new_elbow_vec = (elbow_vec[0] * arm_vec) + shoulder_tail_vec
+    #
+    # new_elbow_vec[1] += (elbow_vec[1] * arm_vec.length)
 
     shoulder = mbg.new_bone("shoulder")
     shoulder.use_deform = True
-    shoulder.head = shoulder_head_vec.copy()
+    shoulder.head = Vector((0, 0, 0))
     shoulder.tail = shoulder_tail_vec.copy()
     shoulder.use_bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
+    # mbg.
+
+    # uparm = mbg.new_bone("uparm")
+    # uparm.head = shoulder_tail_vec.copy()
+    # uparm.tail = new_elbow_vec.copy()
+    # uparm.parent = shoulder
+    # uparm.align_roll = arm_up_vec.copy()
+    # uparm.use_connect = True
+    #
+    # loarm = mbg.new_bone("loarm")
+    # loarm.head = new_elbow_vec.copy()
+    # loarm.tail = wrist_vec.copy()
+    # loarm.parent = uparm
+    # loarm.align_roll = arm_up_vec.copy()
+    # loarm.use_connect = True
+
+    return mbg
+
+
+def meta_init_uparm_loarm(shoulder, elbow_vec, wrist_vec):
+    mbg = MetaBoneDict()
 
     uparm = mbg.new_bone("uparm")
-    uparm.head = shoulder_tail_vec.copy()
-    uparm.tail = new_elbow_vec.copy()
-    uparm.parent = shoulder
-    uparm.align_roll = arm_up_vec.copy()
+    uparm.head = Vector((0, 0, 0))
+    uparm.tail = Vector((elbow_vec[0], elbow_vec[1], 0))
     uparm.use_connect = True
+    uparm.parent = shoulder
 
     loarm = mbg.new_bone("loarm")
-    loarm.head = new_elbow_vec.copy()
-    loarm.tail = wrist_vec.copy()
+    loarm.head = uparm.tail.copy()
+    loarm.tail = Vector((wrist_vec[0], wrist_vec[1], 0))
     loarm.parent = uparm
-    loarm.align_roll = arm_up_vec.copy()
     loarm.use_connect = True
 
     return mbg
@@ -1545,11 +1600,12 @@ def rig_full_body(meta_armature_obj, op=None):
     spine_stiffness.lock_rotation = (False, True, False)
 
     stiff_switch = mbs.new_bone("torso stiff switch")
-    stiff_switch.head = chest.head.copy() + Vector((0, chest.length() / 5, 0))
-    stiff_switch.tail = stiff_switch.head + Vector((0, chest.length() / 5, 0))
+    stiff_switch_offset = -chest.align_roll * (chest.length()/5)
+    stiff_switch.head = chest.head.copy() + stiff_switch_offset
+    stiff_switch.tail = stiff_switch.head + stiff_switch_offset
     stiff_switch.custom_shape = widget_get(WIDGET_STIFF_SWITCH)
     stiff_switch.show_wire = True
-    stiff_switch.align_roll = Vector((0, 0, 1))
+    stiff_switch.align_roll = chest.align_roll.copy()
     stiff_switch.parent = chest
     stiff_switch.lock_location = (True, True, True)
     stiff_switch.rotation_mode = 'ZYX'
@@ -1658,10 +1714,11 @@ def rig_full_body(meta_armature_obj, op=None):
             hand.bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
             hand.use_connect = True
 
-            width_between_tails = max((palm_bones[0].tail - palm_bones[len(palm_bones) - 1].tail).length, palm_bones[0].length()/2)
-            width_between_heads = max((palm_bones[0].head - palm_bones[len(palm_bones) - 1].head).length, palm_bones[0].length()/2)
+            width_between_tails = max((palm_bones[0].tail - palm_bones[len(palm_bones) - 1].tail).length,
+                                      palm_bones[0].length() / 2)
+            width_between_heads = max((palm_bones[0].head - palm_bones[len(palm_bones) - 1].head).length,
+                                      palm_bones[0].length() / 2)
             hand_width_world = max(width_between_heads, width_between_tails)
-
 
             hand_width_local = hand_width_world / hand.length()
 
@@ -1724,9 +1781,11 @@ def rig_full_body(meta_armature_obj, op=None):
                 rig_finger(hand, s1, s2, s3, s4)
 
                 if s1.swing:
-                    rot_target = rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter), controlledmetabone=s1,
-                                   parent=hand_target, lock_location=(True, True, True), lock_rotation_w=True,
-                                   lock_rotation=(False, True, True), lock_rotations_4d=False)
+                    rot_target = rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter),
+                                                controlledmetabone=s1,
+                                                parent=hand_target, lock_location=(True, True, True),
+                                                lock_rotation_w=True,
+                                                lock_rotation=(False, True, True), lock_rotations_4d=False)
 
                     #limiting the location negates the "Inactive Targets Follow" effect, which doesn't make sense for
                     #this target
@@ -2070,7 +2129,6 @@ def rig_bone_to_bone_with_2d_swing_info(a, b, axis_a_override=None):
 
 
 def rig_finger(hand, s1, s2, s3, s4):
-
     s1.parent = hand
 
     #s1 is the palm bone

@@ -313,10 +313,48 @@ class BEPUikTools(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.operator(CreateFullBodyMetaArmature.bl_idname)
-        col.operator(CreateFullBodyRig.bl_idname)
+        col.label("Meta Armature Presets:")
+        op = col.operator(CreateFullBodyMetaArmature.bl_idname, text="Biped")
+        op.use_thumb = True
+        op.num_fingers = 5
+
+        op.spine_pitch = 0
+        op.head_pitch = 0
+
+        op.arm_yaw = -1.570796
+        op.arm_pitch = -.048869
+        op.arm_roll = math.radians(0)
+
+        op.wrist_yaw = 0
+        op.wrist_pitch = 0
+        op.wrist_roll = 0
+
+        op.elbow_vec = Vector((-0.027, 0.26))
+        op.wrist_vec = Vector((0, 0.56925))
+
+        op = col.operator(CreateFullBodyMetaArmature.bl_idname, text="Quadruped")
+        op.num_fingers = 5
+        op.use_thumb = False
+
+        op.spine_pitch = math.radians(90)
+        op.head_pitch = math.radians(-90)
+
+        op.arm_yaw = math.radians(-180)
+        op.arm_pitch = math.radians(0)
+        op.arm_roll = math.radians(-90)
+
+        op.wrist_yaw = math.radians(-90)
+        op.wrist_pitch = math.radians(0)
+        op.wrist_roll = math.radians(90)
+
+        op.elbow_vec = Vector((-0.045,0.413))
+        op.wrist_vec = Vector((0,0.91))
+
         col.separator()
-        col.label("Create Control with Target")
+
+        col.operator(CreateFullBodyRig.bl_idname, text="Generate Rig from Meta Armature")
+        col.separator()
+        col.label("Create Control with Target:")
 
         op = col.operator(CreateControl.bl_idname, text="Position and Orientation")
         op.head_tail = 0
@@ -348,7 +386,7 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
     """Create Full Body Meta Armature"""
     bl_idname = "bepuik_tools.create_full_body_meta_armature"
     bl_label = "Create Full Body Meta Armature"
-    bl_description = "Creates the meta bones which define the basic parameters of a full body rig"
+    bl_description = "Create an armature with the required meta bones that define a full body BEPUik rig"
     bl_options = {'REGISTER', 'UNDO'}
 
     num_fingers = IntProperty(name="Number of Fingers",
@@ -361,14 +399,28 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
                                   default=True)
     use_thumb = BoolProperty(name="Thumb", description="The first finger will be a thumb", default=True)
 
-    wrist_width = FloatProperty(name="Wrist Width", description="The width of the character's wrist",
-                                default=.05)
+    spine_pitch = FloatProperty(name="Spine Pitch", description="The pitch angle of the character's spine",
+                                default=0, subtype='ANGLE')
+
+    head_pitch = FloatProperty(name="Head Pitch", description="The pitch angle of the character's head",
+                              default=0, subtype='ANGLE')
+
+    arm_yaw = FloatProperty(name="Arm Yaw", description="The yaw angle of the character's arm",
+                              default=-1.570796, subtype='ANGLE')
+    arm_pitch = FloatProperty(name="Arm Pitch", description="The pitch angle of the character's arm",
+                                default=-.048869, subtype='ANGLE')
+    arm_roll = FloatProperty(name="Arm Roll", description="The roll angle of the character's arm",
+                               default=0, subtype='ANGLE')
+
     wrist_yaw = FloatProperty(name="Wrist Yaw", description="The yaw angle of the character's wrist",
-                              default=math.radians(-93.9), subtype='ANGLE')
+                              default=0, subtype='ANGLE')
     wrist_pitch = FloatProperty(name="Wrist Pitch", description="The pitch angle of the character's wrist",
-                                default=math.radians(.7), subtype='ANGLE')
+                                default=0, subtype='ANGLE')
     wrist_roll = FloatProperty(name="Wrist Roll", description="The roll angle of the character's wrist",
                                default=0, subtype='ANGLE')
+
+    wrist_width = FloatProperty(name="Wrist Width", description="The width of the character's wrist",
+                                default=.05)
 
     finger_splay = FloatProperty(name="Finger Splay",
                                  description="The amount the fingers are splayed out by default",
@@ -386,20 +438,20 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
                              default=math.radians(-4), subtype='ANGLE')
 
     shoulder_head_vec = FloatVectorProperty(name="Shoulder Head", description="Position of the shoulder head",
-                                            default=(0.02, 0, 1.49), subtype='TRANSLATION')
+                                            default=(0.02, 0.0, 0.55965), subtype='TRANSLATION')
     shoulder_tail_vec = FloatVectorProperty(name="Shoulder Tail", description="Position of the shoulder tail",
-                                            default=(0.15, 0, 1.49), subtype='TRANSLATION')
-    elbow_vec = FloatVectorProperty(name="Elbow", description="Position of the Elbow", default=(.46, .05),
+                                            default=(0.1302, 0, 0), subtype='TRANSLATION')
+    elbow_vec = FloatVectorProperty(name="Elbow", description="Position of the Elbow", default=(-0.027, 0.26),
                                     size=2, subtype='TRANSLATION')
-    wrist_vec = FloatVectorProperty(name="Wrist", description="Position of the Wrist",
-                                    default=(.72, 0.0, 1.46), subtype='TRANSLATION')
+    wrist_vec = FloatVectorProperty(name="Wrist", description="Position of the Wrist",size=2,
+                                    default=(0, 0.56925), subtype='TRANSLATION')
 
     spine_start_vec = FloatVectorProperty(name="Spine Start",
                                           description="Bottom starting point of the spine",
                                           default=(0, 0, 0.93), subtype='TRANSLATION')
     spine_lengths = FloatVectorProperty(name="Spine Lengths",
                                         description="Lengths of each spine segment, from hips to head",
-                                        default=(.15, .16, .30, .11, .17), size=5)
+                                        default=(.15, .16, .30, .11), size=4)
 
     upleg_vec = FloatVectorProperty(name="Upleg", description="Position of the start of the upper leg",
                                     default=(.09, 0, .96), subtype='TRANSLATION')
@@ -410,13 +462,19 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
     toe_vec = FloatVectorProperty(name="Toe", description="Position of the start of the toes",
                                   default=(0.07, -0.08, 0.01), subtype='TRANSLATION')
 
+    head_length = FloatProperty(name="Head Length", description="Length of the head", default=.17)
+
     eye_center = FloatVectorProperty(name="Eye Center", description="Position of the center of the eye",
-                                     default=(0.03075, -0.09405, 1.71475), subtype='TRANSLATION')
+                                     default=(0.03075, -0.09405, 0.0648), subtype='TRANSLATION')
     eye_radius = FloatProperty(name="Eye Radius", description="Radius of the eye", default=0.0166)
-    chin_vec = FloatVectorProperty(name="Chin", description="Position of the chin", default=(0, -0.12, 1.62),
+    chin_vec = FloatVectorProperty(name="Chin", description="Position of the chin", default=(0, -0.12, -0.03025),
                                    subtype='TRANSLATION')
     jaw_vec = FloatVectorProperty(name="Jaw", description="Position of the head of the jaw",
-                                  default=(0, -0.03, 1.67), subtype='TRANSLATION')
+                                  default=(0, -0.03, 0.0196), subtype='TRANSLATION')
+
+
+
+
 
 
     @classmethod
@@ -431,13 +489,10 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
         context.scene.objects.active = ob
         bpy.ops.object.mode_set(mode='EDIT')
 
-        riggenerator.meta_create_full_body(ob, self.num_fingers, self.num_toes, self.foot_width, self.wrist_width,
-                                           self.wrist_yaw, self.wrist_pitch, self.wrist_roll, self.use_thumb,
-                                           self.finger_curl, self.toe_curl, self.finger_splay, self.thumb_splay,
-                                           self.thumb_tilt, self.shoulder_head_vec, self.shoulder_tail_vec,
-                                           self.elbow_vec, self.wrist_vec, self.spine_start_vec, self.spine_lengths,
-                                           self.upleg_vec, self.knee_vec, self.ankle_vec, self.toe_vec, self.eye_center,
-                                           self.eye_radius, self.chin_vec, self.jaw_vec, self.use_simple_toe)
+        riggenerator.meta_create_full_body(ob, self.num_fingers, self.num_toes, self.foot_width, self.wrist_width, self.wrist_yaw, self.wrist_pitch, self.wrist_roll,
+                          self.use_thumb, self.finger_curl, self.toe_curl, self.finger_splay, self.thumb_splay, self.thumb_tilt, self.arm_yaw, self.arm_pitch, self.arm_roll, self.shoulder_head_vec,
+                          self.shoulder_tail_vec, self.elbow_vec, self.wrist_vec, self.spine_start_vec, self.spine_pitch, self.spine_lengths, self.upleg_vec, self.knee_vec,
+                          self.ankle_vec, self.toe_vec, self.head_length, self.head_pitch, self.eye_center, self.eye_radius, self.chin_vec, self.jaw_vec, self.use_simple_toe)
 
         ob.select = True
         ob.show_x_ray = True
@@ -450,7 +505,7 @@ class CreateFullBodyRig(bpy.types.Operator):
     """Create Full Body Rig"""
     bl_idname = "bepuik_tools.rig_full_body"
     bl_label = "Create Full Body Rig"
-    bl_description = "Creates a rig from a meta armature"
+    bl_description = "Use selected meta armature as input to generate a new animation-ready armature"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
