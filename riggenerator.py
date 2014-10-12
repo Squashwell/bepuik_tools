@@ -1783,9 +1783,8 @@ def rig_full_body(meta_armature_obj, op=None):
                 if s1.swing:
                     rot_target = rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter),
                                                 controlledmetabone=s1,
-                                                parent=hand_target, lock_location=(True, True, True),
-                                                lock_rotation_w=True,
-                                                lock_rotation=(False, True, True), lock_rotations_4d=False)
+                                                parent=hand_target, lock_location=(True, True, True), lock_rotation= (False, True, True),
+                                                rotation_mode='XYZ')
 
                     #limiting the location negates the "Inactive Targets Follow" effect, which doesn't make sense for
                     #this target
@@ -1995,7 +1994,7 @@ def rig_full_body(meta_armature_obj, op=None):
 def rig_new_target(metabonegroup, name, controlledmetabone, parent, scale=.10, headtotail=0,
                    custom_shape_name=WIDGET_CUBE, lock_location=(False, False, False), lock_rotation_w=False,
                    lock_rotation=(False, False, False), lock_rotations_4d=False, custom_widget_data=None,
-                   use_rest_offset=True):
+                   use_rest_offset=True, rotation_mode='QUATERNION'):
     targetmetabone = metabonegroup.new_bone_by_fraction(name=name, source_metabone=controlledmetabone,
                                                         start_fraction=headtotail, end_fraction=headtotail + scale)
 
@@ -2007,6 +2006,7 @@ def rig_new_target(metabonegroup, name, controlledmetabone, parent, scale=.10, h
     targetmetabone.lock_rotation = lock_rotation
     targetmetabone.lock_rotations_4d = lock_rotations_4d
     targetmetabone.lock_location = lock_location
+    targetmetabone.rotation_mode = rotation_mode
 
     rig_target_affected(targetmetabone, controlledmetabone, headtotail=headtotail, use_rest_offset=use_rest_offset)
 
