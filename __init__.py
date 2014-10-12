@@ -34,6 +34,8 @@ from mathutils import Vector, Matrix
 from bpy.props import FloatProperty, FloatVectorProperty, BoolProperty, StringProperty, IntProperty, BoolVectorProperty, \
     PointerProperty
 
+import keyingsets_builtins
+
 bl_info = {
     "name": "BEPUik Tools",
     "author": "Harrison Nordby, Ross Nordby",
@@ -857,6 +859,52 @@ class BEPUikObjectProperties(bpy.types.PropertyGroup):
     use_thumb = BoolProperty(default=False, options=set())
     use_simple_toe = BoolProperty(default=False, options=set())
 
+
+
+
+class BUILTIN_KSI_BEPUikControlsTargets(bpy.types.KeyingSetInfo):
+    """Insert a keyframe for all BEPUik Controls' rigidities and their targets' location and rotation"""
+    bl_idname = "BEPUikControlsTargets"
+    bl_label = "BEPUik Controls and Targets"
+
+    poll = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.poll
+
+    def iterator(ksi, context, ks):
+        ksi.targets = set()
+        ob = context.active_object
+
+        for pchan in ob.pose.bones:
+            if pchan.use_bepuik:
+                for con in pchan.constraints:
+                    if con.type == 'BEPUIK_CONTROL':
+                        if con.connection_subtarget:
+                            ksi.targets.add(con.connection_subtarget)
+
+        for pchan in ob.pose.bones:
+            ksi.generate(context, ks, pchan)
+
+
+    def generate(ksi, context, ks, pchan):
+        if pchan.name in ksi.targets:
+            # loc, rot, scale - only include unlocked ones
+            ksi.doLoc(ks, pchan)
+
+            if pchan.rotation_mode in {'QUATERNION', 'AXIS_ANGLE'}:
+                ksi.doRot4d(ks, pchan)
+            else:
+                ksi.doRot3d(ks, pchan)
+
+        if pchan.use_bepuik:
+            for con in pchan.constraints:
+                if con.type == 'BEPUIK_CONTROL':
+                    ksi.addProp(ks, con, 'bepuik_rigidity')
+                    ksi.addProp(ks, con, 'orientation_rigidity')
+                    ksi.addProp(ks, con, 'use_hard_rigidity')
+
+    addProp = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.addProp
+    doLoc = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doLoc
+    doRot3d = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doRot3d
+    doRot4d = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doRot4d
 
 def register():
     bpy.utils.register_module(__name__)
