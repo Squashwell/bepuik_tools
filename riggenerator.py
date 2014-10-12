@@ -59,11 +59,11 @@ AL_START = {AL_ARM_L, AL_ARM_R, AL_LEG_L, AL_LEG_R, AL_SPINE, AL_HEAD, AL_HAND_L
 
 BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT = 16
 
-ARM_SUBSTRINGS = ('shoulder', 'clavicle', 'loarm', 'uparm', 'hand', 'elbow',)
+ARM_SUBSTRINGS = ('shoulder', 'loarm', 'uparm', 'hand', 'elbow',)
 LEG_SUBSTRINGS = ('leg', 'foot', 'knee', 'heel', 'ball',)
 FOOT_SUBSTRINGS = ('toe',)
-TORSO_SUBSTRINGS = ('spine', 'hip', 'chest', 'torso', 'tail')
-RIB_SUBSTRINGS = ('rib',)
+TORSO_SUBSTRINGS = ('spine', 'hip', 'chest', 'torso', 'tail', 'belly')
+RIB_SUBSTRINGS = ('rib', 'clavicle')
 HAND_SUBSTRINGS = ('finger', 'thumb', 'palm',)
 HEAD_SUBSTRINGS = ('head', 'neck', 'eye', 'jaw', 'ear')
 ROOT_SUBSTRINGS = ('root',)
@@ -1045,6 +1045,7 @@ class MetaBonesBakeData():
         self.transform = transform
 
 
+
 def translation4(vec):
     return Matrix.Translation(vec).to_4x4()
 
@@ -1055,8 +1056,8 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
                           shoulder_tail_vec, elbow_vec, wrist_vec, spine_start_vec, spine_pitch, spine_lengths,
                           upleg_vec, knee_vec,
                           ankle_vec, toe_vec, head_length, head_pitch, eye_center, eye_radius, chin_vec, jaw_vec,
-                          use_simple_toe):
-    spine_meta = meta_init_spine(spine_lengths)
+                          use_simple_toe, num_tail_bones, tail_length, use_ears, use_belly, use_bepuik_tail):
+    spine_meta = meta_init_spine(spine_lengths, use_belly, num_tail_bones, tail_length)
     spine_mat = translation4(spine_start_vec) * Matrix.Rotation(spine_pitch, 4, 'X')
 
     shoulder_meta = meta_init_shoulder(shoulder_tail_vec)
@@ -1083,7 +1084,7 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
     toes_meta = meta_init_toes(num_toes, toe_curl, foot_width, use_simple_toe)
     toes_mat = leg_mat * translation4(leg_meta["foot"].tail) * Matrix.Rotation(math.pi, 4, 'Z')
 
-    head_meta = meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec)
+    head_meta = meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec, use_ears)
     head_mat = spine_mat * translation4(spine_meta["neck"].tail) * Matrix.Rotation(head_pitch, 4, 'X')
 
     flip = Matrix.Scale(-1, 4, Vector((1, 0, 0)))
@@ -1124,20 +1125,29 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
     ob.bepuik_autorig.is_meta_armature = True
     ob.bepuik_autorig.use_thumb = use_thumb
     ob.bepuik_autorig.use_simple_toe = use_simple_toe
+    ob.bepuik_autorig.use_bepuik_tail = use_bepuik_tail
 
 
-def meta_init_faceside(eye_center, eye_radius):
+def meta_init_faceside(eye_center, eye_radius, use_ears, jaw_vec, head_length):
     metabones = MetaBoneDict()
 
     b = metabones.new_bone("eye")
     b.head = eye_center.copy()
     b.tail = eye_center + Vector((0, -1 * eye_radius, 0))
 
+    if use_ears:
+        b = metabones.new_bone("ear")
+        b.head = Vector((eye_center[0], jaw_vec[1], eye_center[2]))
+        b.tail = b.head + (Vector((0,0,1)) * (head_length/2))
+        b.use_deform = True
+        b.lock_location = (True, True, True)
+        b.align_roll = Vector((0,-1,0))
+
     return metabones
 
 
-def meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec):
-    face_side_meta = meta_init_faceside(eye_center, eye_radius)
+def meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec, use_ears):
+    face_side_meta = meta_init_faceside(eye_center, eye_radius, use_ears, jaw_vec, head_length)
 
     bakedata_list = [MetaBonesBakeData(face_side_meta, Matrix.Identity(4), 'L'),
                      MetaBonesBakeData(face_side_meta, Matrix.Scale(-1, 4, Vector((1, 0, 0))), 'R')]
@@ -1158,7 +1168,7 @@ def meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec):
     return combined_metabones
 
 
-def meta_init_spine(spine_lengths):
+def meta_init_spine(spine_lengths, use_belly, num_tail_bones, tail_length):
     mbg = MetaBoneDict()
 
     bone_names = ["hips", "spine", "chest", "neck"]
@@ -1196,6 +1206,55 @@ def meta_init_spine(spine_lengths):
     b.tail = Vector((-0.102, -0.024, rib_tail_z))
     b.align_roll = Vector((0, -1, 0))
     b.parent = mbg["chest"]
+
+    if use_belly:
+        spine = mbg["spine"]
+        belly = mbg.new_bone("belly")
+        belly.head = ((spine.head+spine.tail)/2) + (spine.align_roll * (spine.length()/3))
+        belly.tail = belly.head + (spine.align_roll * (spine.length()))
+        belly.align_roll = spine.y_axis()
+        belly.parent = spine
+        belly.use_deform = True
+
+    if num_tail_bones > 0:
+        spine = mbg["spine"]
+        hips = mbg["hips"]
+
+        length_per_segment = tail_length/num_tail_bones
+
+        tail_direction = -spine.align_roll
+        tail_segment_offset = tail_direction * length_per_segment
+        tposition = spine.head + (tail_direction * (spine.length()/2))
+
+        parent = hips
+        for i in range(num_tail_bones):
+            tail = mbg.new_bone("tail%s" % (i+1))
+            tail.head = tposition.copy()
+
+            tposition += tail_segment_offset
+            tail.tail = tposition.copy()
+
+            tail.align_roll = spine.y_axis()
+            tail.use_deform = True
+            tail.parent = parent
+            tail.bbone_segments = 4
+            tail.bbone_in = 1
+            tail.bbone_out = 1
+
+            if parent != hips:
+                tail.use_connect = True
+            else:
+                tail.inherit_rotation = False
+
+
+            parent = tail
+        tail.use_bepuik_always_solve = True
+
+
+
+
+
+
 
     return mbg
 
@@ -1578,6 +1637,23 @@ def rig_full_body(meta_armature_obj, op=None):
     rig_twist_joint(hips, spine)
     rig_twist_joint(chest, neck)
 
+    tail_bones = []
+    for i in range(20):
+        name = "tail%s" % (i+1)
+        if name in mbs:
+            tail_bones.append(mbs[name])
+
+    if meta_armature_obj.bepuik_autorig.use_bepuik_tail:
+        prev_tail_bone = None
+        for t in range(len(tail_bones)):
+            flag_bone_deforming_ballsocket_bepuik(tail_bones[t])
+            if prev_tail_bone:
+                rig_twist_limit(prev_tail_bone, tail_bones[t], twist=30)
+            rig_new_target(mbs, "tail%s target" % (t+1), tail_bones[t], root, headtotail=1)
+            prev_tail_bone = tail_bones[t]
+    else:
+        tail_bones[0].lock_location = (True, True, True)
+
     #spine stiffness stuff
     chest_stiffness = mbs.new_bone("chest stiff")
     chest_stiffness.head = chest.head.copy()
@@ -1657,6 +1733,7 @@ def rig_full_body(meta_armature_obj, op=None):
         upleg = mbs["upleg.%s" % suffixletter]
         foot = mbs["foot.%s" % suffixletter]
         eye = mbs["eye.%s" % suffixletter]
+        ear = mbs["ear.%s" % suffixletter]
         shoulder = mbs["shoulder.%s" % suffixletter]
         uparm = mbs["uparm.%s" % suffixletter]
         loarm = mbs["loarm.%s" % suffixletter]
@@ -1932,6 +2009,8 @@ def rig_full_body(meta_armature_obj, op=None):
         eye.new_meta_blender_constraint('DAMPED_TRACK', eye_target)
         eye.use_deform = True
         eye.parent = head
+
+        ear.parent = head
 
         rig_arm(shoulder, uparm, loarm, relative_x_axis, up)
         rig_new_target(mbs, name="loarm target.%s" % suffixletter, controlledmetabone=loarm, parent=root)
