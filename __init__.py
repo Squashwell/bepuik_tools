@@ -500,6 +500,10 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
         ob.show_x_ray = True
 
         bpy.ops.object.mode_set(mode='OBJECT')
+
+        if bpy.context.area.type == 'VIEW_3D':
+            bpy.context.area.spaces[0].show_relationship_lines = False
+
         return {'FINISHED'}
 
 
@@ -522,6 +526,10 @@ class CreateFullBodyRig(bpy.types.Operator):
         rig_obj.data.show_bepuik_controls = True
         rig_obj.use_bepuik_inactive_targets_follow = True
         rig_obj.use_bepuik_dynamic = True
+
+        if bpy.context.area.type == 'VIEW_3D':
+            bpy.context.area.spaces[0].show_relationship_lines = False
+
         return {'FINISHED'}
 
 
