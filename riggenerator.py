@@ -1643,16 +1643,17 @@ def rig_full_body(meta_armature_obj, op=None):
         if name in mbs:
             tail_bones.append(mbs[name])
 
-    if meta_armature_obj.bepuik_autorig.use_bepuik_tail:
-        prev_tail_bone = None
-        for t in range(len(tail_bones)):
-            flag_bone_deforming_ballsocket_bepuik(tail_bones[t])
-            if prev_tail_bone:
-                rig_twist_limit(prev_tail_bone, tail_bones[t], twist=30)
-            rig_new_target(mbs, "tail%s target" % (t+1), tail_bones[t], root, headtotail=1)
-            prev_tail_bone = tail_bones[t]
-    else:
-        tail_bones[0].lock_location = (True, True, True)
+    if len(tail_bones) > 0:
+        if meta_armature_obj.bepuik_autorig.use_bepuik_tail:
+            prev_tail_bone = None
+            for t in range(len(tail_bones)):
+                flag_bone_deforming_ballsocket_bepuik(tail_bones[t])
+                if prev_tail_bone:
+                    rig_twist_limit(prev_tail_bone, tail_bones[t], twist=30)
+                rig_new_target(mbs, "tail%s target" % (t+1), tail_bones[t], root, headtotail=1)
+                prev_tail_bone = tail_bones[t]
+        else:
+            tail_bones[0].lock_location = (True, True, True)
 
     #spine stiffness stuff
     chest_stiffness = mbs.new_bone("chest stiff")
@@ -2004,13 +2005,13 @@ def rig_full_body(meta_armature_obj, op=None):
 
             rig_new_target(mbs, "foot ball target.%s" % suffixletter, foot, root, headtotail=1.0, use_rest_offset=True)
 
+        if eye:
+            eye.new_meta_blender_constraint('DAMPED_TRACK', eye_target)
+            eye.use_deform = True
+            eye.parent = head
 
-        #generally progress from head downward...
-        eye.new_meta_blender_constraint('DAMPED_TRACK', eye_target)
-        eye.use_deform = True
-        eye.parent = head
-
-        ear.parent = head
+        if ear:
+            ear.parent = head
 
         rig_arm(shoulder, uparm, loarm, relative_x_axis, up)
         rig_new_target(mbs, name="loarm target.%s" % suffixletter, controlledmetabone=loarm, parent=root)
