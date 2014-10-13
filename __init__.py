@@ -405,6 +405,8 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
                                   default=True)
     use_thumb = BoolProperty(name="Thumb", description="The first finger will be a thumb", default=True)
 
+    use_simple_hand = BoolProperty(name="Simple Hand", description="Simpler hand with fewer bones", default=False)
+
     use_ears = BoolProperty(name="Ears", description="Create ears", default=False)
 
 
@@ -513,7 +515,7 @@ class CreateFullBodyMetaArmature(bpy.types.Operator):
         riggenerator.meta_create_full_body(ob, self.num_fingers, self.num_toes, self.foot_width, self.wrist_width, self.wrist_yaw, self.wrist_pitch, self.wrist_roll,
                           self.use_thumb, self.finger_curl, self.toe_curl, self.finger_splay, self.thumb_splay, self.thumb_tilt, self.arm_yaw, self.arm_pitch, self.arm_roll, self.shoulder_head_vec,
                           self.shoulder_tail_vec, self.elbow_vec, self.wrist_vec, self.spine_start_vec, self.spine_pitch, self.spine_lengths, self.upleg_vec, self.knee_vec,
-                          self.ankle_vec, self.toe_vec, self.head_length, self.head_pitch, self.eye_center, self.eye_radius, self.chin_vec, self.jaw_vec, self.use_simple_toe, self.num_tail_bones, self.tail_length, self.use_ears, self.use_belly, self.use_bepuik_tail)
+                          self.ankle_vec, self.toe_vec, self.head_length, self.head_pitch, self.eye_center, self.eye_radius, self.chin_vec, self.jaw_vec, self.use_simple_toe, self.num_tail_bones, self.tail_length, self.use_ears, self.use_belly, self.use_bepuik_tail, self.use_simple_hand)
 
         ob.select = True
         ob.show_x_ray = True
@@ -813,6 +815,7 @@ class BEPUikObjectProperties(bpy.types.PropertyGroup):
     use_thumb = BoolProperty(default=False, options=set())
     use_simple_toe = BoolProperty(default=False, options=set())
     use_bepuik_tail = BoolProperty(default=False, options=set())
+    use_simple_hand = BoolProperty(default=False, options=set())
 
 
 

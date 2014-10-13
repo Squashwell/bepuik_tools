@@ -1049,6 +1049,51 @@ class MetaBonesBakeData():
 def translation4(vec):
     return Matrix.Translation(vec).to_4x4()
 
+def metabones_get_phalange_segment(mbs, name, phalange_num, segment_num, suffixletter):
+    return mbs["%s%s-%s.%s" % (name, phalange_num, segment_num, suffixletter)]
+
+def metabones_get_segment_siblings(mbs, name, s, suffixletter, max_num_phalange=5):
+    segment_siblings = []
+    for p in range(1, max_num_phalange + 1):
+        segment = metabones_get_phalange_segment(mbs, name, p, s, suffixletter)
+        if segment:
+            segment_siblings.append(segment)
+
+    return segment_siblings
+
+def metabones_add_hand(mbs, suffixletter, proximal_bones, use_thumb):
+    hand_name = "hand.%s" % suffixletter
+    hand = mbs[hand_name]
+    assert not hand
+    loarm = mbs["loarm.%s" % suffixletter]
+    assert loarm
+
+    hand = mbs.new_bone("hand.%s" % suffixletter)
+    hand.parent = loarm
+    hand.head = loarm.tail.copy()
+    hand.tail = sum_vectors([proximal.head for proximal in proximal_bones]) / len(proximal_bones)
+    hand.use_connect = True
+
+    if use_thumb and len(proximal_bones) > 1:
+        aligner_bones = proximal_bones[1:]
+    else:
+        aligner_bones = proximal_bones
+
+    hand.align_roll = sum_vectors([p.align_roll for p in aligner_bones]) / len(aligner_bones)
+
+    return hand
+
+import re
+def metabones_count_num_fingers(mbs, suffix):
+    p = re.compile(r"finger[0-9]+-")
+    matched_finger_prefixes = set()
+    for mbname, mb in mbs:
+        if mbname.endswith(suffix):
+            match = p.match(mbname)
+            if match:
+                matched_finger_prefixes.add(match.group(0))
+
+    return len(matched_finger_prefixes)
 
 def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wrist_yaw, wrist_pitch, wrist_roll,
                           use_thumb, finger_curl, toe_curl, finger_splay, thumb_splay, thumb_tilt, arm_yaw,
@@ -1056,7 +1101,7 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
                           shoulder_tail_vec, elbow_vec, wrist_vec, spine_start_vec, spine_pitch, spine_lengths,
                           upleg_vec, knee_vec,
                           ankle_vec, toe_vec, head_length, head_pitch, eye_center, eye_radius, chin_vec, jaw_vec,
-                          use_simple_toe, num_tail_bones, tail_length, use_ears, use_belly, use_bepuik_tail):
+                          use_simple_toe, num_tail_bones, tail_length, use_ears, use_belly, use_bepuik_tail, use_simple_hand):
     spine_meta = meta_init_spine(spine_lengths, use_belly, num_tail_bones, tail_length)
     spine_mat = translation4(spine_start_vec) * Matrix.Rotation(spine_pitch, 4, 'X')
 
@@ -1119,6 +1164,24 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
     #    bakedata_list.append(MetaBonesBakeData(testleft,flip * mat_fingers,'R'))
 
     combined_metabones = MetaBoneDict.from_bakedata(bakedata_list)
+
+    if use_simple_hand:
+        for suffixletter in ("L", "R"):
+            proximal_bones = []
+            for i in range(num_fingers):
+                palm_bone = metabones_get_phalange_segment(combined_metabones, "finger", i+1, 1, suffixletter)
+
+                if palm_bone:
+                    combined_metabones.pop(palm_bone.name)
+
+                proximal = metabones_get_phalange_segment(combined_metabones, "finger", i+1, 2, suffixletter)
+                if proximal:
+                    proximal.parent = None
+                    proximal.use_connect = False
+                    proximal_bones.append(proximal)
+
+            metabones_add_hand(combined_metabones, suffixletter, proximal_bones, use_thumb)
+
     combined_metabones.to_ob(ob)
 
     ob.data.layers = [True] * 32
@@ -1126,6 +1189,7 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
     ob.bepuik_autorig.use_thumb = use_thumb
     ob.bepuik_autorig.use_simple_toe = use_simple_toe
     ob.bepuik_autorig.use_bepuik_tail = use_bepuik_tail
+    ob.bepuik_autorig.use_simple_hand = use_simple_hand
 
 
 def meta_init_faceside(eye_center, eye_radius, use_ears, jaw_vec, head_length):
@@ -1741,26 +1805,17 @@ def rig_full_body(meta_armature_obj, op=None):
         foot_target = mbs["foot target.%s" % suffixletter]
         foot_width_bone = mbs["foot width.%s" % suffixletter]
 
-        def ps(name, p, s):
+        def get_phalange_segment(name, p, s):
             return mbs["%s%s-%s.%s" % (name, p, s, suffixletter)]
 
-        def pssc(name, p, s):
+        def create_phalange_swingcenter(name, p, s):
             return mbs.new_bone("MCH-%s%s %s swingcenter.%s" % (name, p, s, suffixletter))
-
-        def get_segment_siblings(name, s):
-            segment_siblings = []
-            for p in range(1, 6):
-                segment = ps(name, p, s)
-                if segment:
-                    segment_siblings.append(segment)
-
-            return segment_siblings
 
         def get_final_segments(name):
             final_segments = []
             for p in range(1, 6):
                 for s in [3, 2, 1]:
-                    segment = ps(name, p, s)
+                    segment = get_phalange_segment(name, p, s)
                     if segment:
                         final_segments.append(segment)
                         break
@@ -1768,35 +1823,25 @@ def rig_full_body(meta_armature_obj, op=None):
             return final_segments
 
         def rig_hand():
-            def fs(f, s):
-                return ps("finger", f, s)
+            def get_finger_segment(f, s):
+                return get_phalange_segment("finger", f, s)
 
-            def fssc(f, s):
-                return pssc("finger", f, s)
+            def create_finger_swingcenter(f, s):
+                return create_phalange_swingcenter("finger", f, s)
 
-            palm_bones = get_segment_siblings("finger", 1)
-            s2_bones = get_segment_siblings("finger", 2)
+            proximal_bones = metabones_get_segment_siblings(mbs, "finger", 2, suffixletter)
 
-            hand = mbs.new_bone("hand.%s" % suffixletter)
-            hand.parent = loarm
-            hand.head = loarm.tail.copy()
-            hand.tail = sum_vectors([s2.tail for s2 in s2_bones]) / len(s2_bones)
+            hand = mbs["hand.%s" % suffixletter]
+            if not hand:
+                hand = metabones_add_hand(mbs, suffixletter, proximal_bones, meta_armature_obj.bepuik_autorig.use_thumb)
 
-            if meta_armature_obj.bepuik_autorig.use_thumb and len(palm_bones) > 1:
-                aligner_bones = palm_bones[1:]
-            else:
-                aligner_bones = palm_bones
-
-            hand.align_roll = sum_vectors([p.align_roll for p in aligner_bones]) / len(aligner_bones)
             hand.use_bepuik = True
             hand.bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
-            hand.use_connect = True
 
-            width_between_tails = max((palm_bones[0].tail - palm_bones[len(palm_bones) - 1].tail).length,
-                                      palm_bones[0].length() / 2)
-            width_between_heads = max((palm_bones[0].head - palm_bones[len(palm_bones) - 1].head).length,
-                                      palm_bones[0].length() / 2)
-            hand_width_world = max(width_between_heads, width_between_tails)
+            if meta_armature_obj.bepuik_autorig.use_simple_hand:
+                hand.use_deform = True
+
+            hand_width_world = max((proximal_bones[0].head - proximal_bones[len(proximal_bones) - 1].head).length, proximal_bones[0].length()*.75)
 
             hand_width_local = hand_width_world / hand.length()
 
@@ -1825,18 +1870,20 @@ def rig_full_body(meta_armature_obj, op=None):
             s1_swings = [0, 0, 0, 3, 3]
 
             for f in range(1, 6):
-                s1 = fs(f, 1)
-                s2 = fs(f, 2)
-                s3 = fs(f, 3)
-                s4 = fs(f, 4)
+                s1 = get_finger_segment(f, 1)
+                s2 = get_finger_segment(f, 2)
+                s3 = get_finger_segment(f, 3)
+                s4 = get_finger_segment(f, 4)
 
-                if not all((s1, s2, s3, s4)):
+                if s1: #valid for s1 to not exist if using simple hand
+                    s1.swing = s1_swings[f - 1]
+
+                if not all((s2, s3, s4)):
                     continue
 
-                s1.swing = s1_swings[f - 1]
+                s3.swing_center = create_finger_swingcenter(f, 3)
 
-                s3.swing_center = fssc(f, 3)
-                s4.swing_center = fssc(f, 4)
+                s4.swing_center = create_finger_swingcenter(f, 4)
 
                 if f == 1 and meta_armature_obj.bepuik_autorig.use_thumb:
                     s2.swing_y = 30
@@ -1856,34 +1903,38 @@ def rig_full_body(meta_armature_obj, op=None):
                     s4.swing_angle_max = 45
                     s4.swing_angle_min = -95
 
-                rig_finger(hand, s1, s2, s3, s4)
+                if meta_armature_obj.bepuik_autorig.use_simple_hand:
+                    rig_simple_finger(hand, s2, s3, s4)
 
-                if s1.swing:
-                    rot_target = rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter),
-                                                controlledmetabone=s1,
-                                                parent=hand_target, lock_location=(True, True, True), lock_rotation= (False, True, True),
-                                                rotation_mode='XYZ')
+                else:
+                    rig_finger(hand, s1, s2, s3, s4)
 
-                    #limiting the location negates the "Inactive Targets Follow" effect, which doesn't make sense for
-                    #this target
-                    mbc = rot_target.new_meta_blender_constraint('LIMIT_LOCATION')
-                    mbc.use_min_x = True
-                    mbc.use_max_x = True
-                    mbc.use_min_y = True
-                    mbc.use_max_y = True
-                    mbc.use_min_z = True
-                    mbc.use_max_z = True
-                    mbc.owner_space = 'LOCAL'
-                    mbc.use_transform_limit = True
+                    if s1.swing:
+                        rot_target = rig_new_target(mbs, "%s rot.%s" % (split_suffix(s1.name)[0], suffixletter),
+                                                    controlledmetabone=s1,
+                                                    parent=hand_target, lock_location=(True, True, True), lock_rotation= (False, True, True),
+                                                    rotation_mode='XYZ')
+
+                        #limiting the location negates the "Inactive Targets Follow" effect, which doesn't make sense for
+                        #this target
+                        mbc = rot_target.new_meta_blender_constraint('LIMIT_LOCATION')
+                        mbc.use_min_x = True
+                        mbc.use_max_x = True
+                        mbc.use_min_y = True
+                        mbc.use_max_y = True
+                        mbc.use_min_z = True
+                        mbc.use_max_z = True
+                        mbc.owner_space = 'LOCAL'
+                        mbc.use_transform_limit = True
 
         def rig_foot():
-            def fs(f, s):
-                return ps("toe", f, s)
+            def get_toe_segment(f, s):
+                return get_phalange_segment("toe", f, s)
 
-            def fssc(f, s):
-                return pssc("toe", f, s)
+            def create_toe_swingcenter(f, s):
+                return create_phalange_swingcenter("toe", f, s)
 
-            s1_bones = get_segment_siblings("toe", 1)
+            s1_bones = metabones_get_segment_siblings(mbs, "toe", 1, suffixletter)
 
             if len(s1_bones) > 1:
                 foot_width_world = (s1_bones[0].head - s1_bones[len(s1_bones) - 1].head).length
@@ -1895,7 +1946,7 @@ def rig_full_body(meta_armature_obj, op=None):
             #the foot width bone is only needed as a reference for single toed characters, after it's used
             #delete it because the final rig doesn't need it.
             if foot_width_bone:
-                del mbs[foot_width_bone.name]
+                mbs.pop(foot_width_bone.name)
 
             multitarget_segments = s1_bones
             final_segments = get_final_segments("toe")
@@ -1968,9 +2019,9 @@ def rig_full_body(meta_armature_obj, op=None):
             #                c.max_distance = 999999
 
             for f in range(1, 6):
-                s1 = fs(f, 1)
-                s2 = fs(f, 2)
-                s3 = fs(f, 3)
+                s1 = get_toe_segment(f, 1)
+                s2 = get_toe_segment(f, 2)
+                s3 = get_toe_segment(f, 3)
 
                 if not s1:
                     continue
@@ -1981,14 +2032,14 @@ def rig_full_body(meta_armature_obj, op=None):
                 s1.swing_y = 90
 
                 if s2:
-                    s2.swing_center = fssc(f, 2)
+                    s2.swing_center = create_toe_swingcenter(f, 2)
                     s2.swing_angle_max = 0
                     s2.swing_angle_min = -90
 
                 #                    tail_affected_by_floor(s2)
 
                 if s3:
-                    s3.swing_center = fssc(f, 3)
+                    s3.swing_center = create_toe_swingcenter(f, 3)
                     s3.swing_angle_max = 70
                     s3.swing_angle_min = -20
 
@@ -2197,60 +2248,79 @@ def rig_bone_to_bone_with_2d_swing_info(a, b, axis_a_override=None):
 
     if hasattr(b, 'swing_y'):
         c = a.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', b)
-        c.axis_a = axis_a_override, 'Y'
+        c.axis_a = b, 'Y'
         c.axis_b = b, 'Y'
         c.max_swing = b.swing_y
 
     if hasattr(b, 'swing_x'):
         c = a.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', b)
-        c.axis_a = axis_a_override, 'X'
+        c.axis_a = b, 'X'
         c.axis_b = b, 'X'
         c.max_swing = b.swing_x
 
 
-def rig_finger(hand, s1, s2, s3, s4):
-    s1.parent = hand
+def rig_simple_finger(hand, proximal, intermediate, distal):
+    proximal.use_connect = False
+    proximal.parent = hand
+    rig_twist_joint(proximal.parent, proximal)
+    rig_bone_to_bone_with_2d_swing_info(proximal.parent, proximal, axis_a_override=None)
+    flag_bone_deforming_ballsocket_bepuik(proximal)
+
+    rig_twist_joint(proximal, intermediate)
+    rig_bone_to_bone_with_swing_center_info(proximal, intermediate)
+    flag_bone_deforming_ballsocket_bepuik(intermediate)
+    intermediate.use_connect = True
+    intermediate.parent = proximal
+
+    rig_twist_joint(intermediate, distal)
+    rig_bone_to_bone_with_swing_center_info(intermediate, distal)
+    flag_bone_deforming_ballsocket_bepuik(distal)
+    distal.use_connect = True
+    distal.parent = intermediate
+
+def rig_finger(hand, metacarpal, proximal, intermediate, distal):
+    metacarpal.parent = hand
 
     #s1 is the palm bone
-    if s1.swing:
-        flag_bone_deforming_ballsocket_bepuik(s1)
+    if metacarpal.swing:
+        flag_bone_deforming_ballsocket_bepuik(metacarpal)
 
-        c = hand.new_meta_blender_constraint('BEPUIK_REVOLUTE_JOINT', s1)
+        c = hand.new_meta_blender_constraint('BEPUIK_REVOLUTE_JOINT', metacarpal)
         c.free_axis = hand, 'X'
 
-        c = hand.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', s1)
+        c = hand.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', metacarpal)
         c.axis_a = hand, 'Y'
-        c.axis_b = s1, 'Y'
-        c.max_swing = max(degrees_between(hand, s1), s1.swing)
+        c.axis_b = metacarpal, 'Y'
+        c.max_swing = max(degrees_between(hand, metacarpal), metacarpal.swing)
 
         #since s1 has a swing, s2 will be its child
-        s2_parent = s1
-        s2.use_connect = True
+        s2_parent = metacarpal
+        proximal.use_connect = True
     else:
         #s1 doesn't have a swing, therefore, it should simply be a deforming mechanical bone.
-        s1.use_deform = True
-        flag_bone_mechanical(s1)
+        metacarpal.use_deform = True
+        flag_bone_mechanical(metacarpal)
 
         s2_parent = hand
-        s2.use_connect = False
+        proximal.use_connect = False
 
-    s2.parent = s2_parent
+    proximal.parent = s2_parent
 
-    rig_twist_joint(s2.parent, s2)
-    rig_bone_to_bone_with_2d_swing_info(s2.parent, s2, axis_a_override=s1)
-    flag_bone_deforming_ballsocket_bepuik(s2)
+    rig_twist_joint(proximal.parent, proximal)
+    rig_bone_to_bone_with_2d_swing_info(proximal.parent, proximal, axis_a_override=None)
+    flag_bone_deforming_ballsocket_bepuik(proximal)
 
-    rig_twist_joint(s2, s3)
-    rig_bone_to_bone_with_swing_center_info(s2, s3)
-    flag_bone_deforming_ballsocket_bepuik(s3)
-    s3.use_connect = True
-    s3.parent = s2
+    rig_twist_joint(proximal, intermediate)
+    rig_bone_to_bone_with_swing_center_info(proximal, intermediate)
+    flag_bone_deforming_ballsocket_bepuik(intermediate)
+    intermediate.use_connect = True
+    intermediate.parent = proximal
 
-    rig_twist_joint(s3, s4)
-    rig_bone_to_bone_with_swing_center_info(s3, s4)
-    flag_bone_deforming_ballsocket_bepuik(s4)
-    s4.use_connect = True
-    s4.parent = s3
+    rig_twist_joint(intermediate, distal)
+    rig_bone_to_bone_with_swing_center_info(intermediate, distal)
+    flag_bone_deforming_ballsocket_bepuik(distal)
+    distal.use_connect = True
+    distal.parent = intermediate
 
 
 def rig_toe(s1, s2, s3):
