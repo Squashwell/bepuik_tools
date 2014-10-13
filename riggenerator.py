@@ -1806,7 +1806,7 @@ def rig_full_body(meta_armature_obj, op=None):
             custom_widget_data[hand_custom_shape_name].subsurface_levels = 1
 
             hand_target_custom_shape_name = "%s target.%s" % (WIDGET_HAND, suffixletter)
-            custom_widget_data[hand_target_custom_shape_name] = widgetdata_pad(width=hand_width_local * 1.2,
+            custom_widget_data[hand_target_custom_shape_name] = widgetdata_pad(width=hand_width_local * 1.4,
                                                                                length=1.0 * 1.2, mid=.1)
 
             hand.custom_shape = widget_get(hand_custom_shape_name)
