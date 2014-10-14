@@ -1129,7 +1129,7 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
     toes_meta = meta_init_toes(num_toes, toe_curl, foot_width, use_simple_toe)
     toes_mat = leg_mat * translation4(leg_meta["foot"].tail) * Matrix.Rotation(math.pi, 4, 'Z')
 
-    head_meta = meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec, use_ears)
+    head_meta = meta_init_head(spine_meta["neck"], head_length, eye_center, eye_radius, chin_vec, jaw_vec, use_ears)
     head_mat = spine_mat * translation4(spine_meta["neck"].tail) * Matrix.Rotation(head_pitch, 4, 'X')
 
     flip = Matrix.Scale(-1, 4, Vector((1, 0, 0)))
@@ -1210,7 +1210,7 @@ def meta_init_faceside(eye_center, eye_radius, use_ears, jaw_vec, head_length):
     return metabones
 
 
-def meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec, use_ears):
+def meta_init_head(neck, head_length, eye_center, eye_radius, chin_vec, jaw_vec, use_ears):
     face_side_meta = meta_init_faceside(eye_center, eye_radius, use_ears, jaw_vec, head_length)
 
     bakedata_list = [MetaBonesBakeData(face_side_meta, Matrix.Identity(4), 'L'),
@@ -1222,6 +1222,7 @@ def meta_init_head(head_length, eye_center, eye_radius, chin_vec, jaw_vec, use_e
     head.tail = Vector((0, 0, head_length))
     head.align_roll = Vector((0,-1,0))
     head.use_connect = True
+    head.parent = neck
 
     jaw = combined_metabones.new_bone('jaw')
     jaw.head = jaw_vec.copy()
