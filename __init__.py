@@ -358,7 +358,7 @@ class BEPUikTools(bpy.types.Panel):
 
         col.separator()
 
-        col.operator(CreateFullBodyRig.bl_idname, text="Generate Rig from Meta Armature")
+        col.operator(CreateFullBodyRig.bl_idname, text="Generate Rig")
         col.separator()
         col.label("Create Control with Target:")
 
