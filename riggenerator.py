@@ -1842,7 +1842,7 @@ def rig_full_body(meta_armature_obj, op=None):
             if meta_armature_obj.bepuik_autorig.use_simple_hand:
                 hand.use_deform = True
 
-            hand_width_world = max((proximal_bones[0].head - proximal_bones[len(proximal_bones) - 1].head).length, proximal_bones[0].length()*.75)
+            hand_width_world = max((proximal_bones[0].head - proximal_bones[len(proximal_bones) - 1].head).length, hand.length())
 
             hand_width_local = hand_width_world / hand.length()
 
