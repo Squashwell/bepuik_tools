@@ -1868,7 +1868,7 @@ def rig_full_body(meta_armature_obj, op=None):
 
             rig_target_affected(hand_target, hand, position_rigidity=1, orientation_rigidity=1)
 
-            s1_swings = [0, 0, 0, 3, 3]
+            s1_swings = [0, 0, 0, 20, 20]
 
             for f in range(1, 6):
                 s1 = get_finger_segment(f, 1)
