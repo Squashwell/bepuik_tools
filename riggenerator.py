@@ -723,7 +723,7 @@ class MetaBone():
                      list(bone_attrs.items()) +
                      list(special_attrs.items()))
 
-    def __init__(self, name, metabone=None, transform=None):
+    def __init__(self, name, metabone=None, transform=None, length=None):
         self.meta_blender_constraints = []
 
         if metabone:
@@ -737,6 +737,9 @@ class MetaBone():
             self.head = transform * self.head
             self.tail = transform * self.tail
             self.align_roll = transform.to_3x3() * self.align_roll
+
+            if length:
+                self.tail = self.head + (self.y_axis() * length)
 
         self.name = name
 
@@ -892,8 +895,8 @@ class MetaBoneDict(dict):
             raise Exception("Cannot add metabone with name %s! Already exists!" % key)
         dict.__setitem__(self, key, val)
 
-    def new_bone(self, name, metabone=None, transform=None):
-        self[name] = MetaBone(name, metabone, transform)
+    def new_bone(self, name, metabone=None, transform=None, length=None):
+        self[name] = MetaBone(name, metabone, transform, length)
         return self[name]
 
     def new_bone_by_fraction(self, name, source_metabone, start_fraction=0, end_fraction=1):
@@ -909,6 +912,8 @@ class MetaBoneDict(dict):
         new_bone.tail = start_point + local_end
 
         new_bone.align_roll = source_metabone.align_roll
+        new_bone.bbone_x = source_metabone.bbone_x
+        new_bone.bbone_z = source_metabone.bbone_z
         return new_bone
 
     @classmethod
