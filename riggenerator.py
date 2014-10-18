@@ -1732,8 +1732,9 @@ def rig_full_body(meta_armature_obj, op=None):
     chest_stiffness.custom_shape = widget_get(WIDGET_STIFF_TRIANGLE)
     chest_stiffness.parent = spine
     chest_stiffness.show_wire = True
-    chest_stiffness.use_connect = True
+    chest_stiffness.use_connect = False #cannot use connect or else the bbone for the spine wont work
     chest_stiffness.align_roll = chest.align_roll.copy()
+    chest_stiffness.lock_location = (True,True,True)
 
     spine_stiffness = mbs.new_bone("spine stiff")
     spine_stiffness.head = spine.head.copy()
