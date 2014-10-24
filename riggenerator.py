@@ -1552,7 +1552,7 @@ def degrees_between(a, b):
     if type(b) == MetaBone:
         b = b.y_axis()
 
-    return math.degrees(math.acos(max(min(a.dot(b), 1), -1)))
+    return math.degrees(a.angle(b))
 
 
 def rig_target_affected(target, affected, headtotail=0, position_rigidity=0, orientation_rigidity=0,
@@ -2420,9 +2420,15 @@ def rig_arm(shoulder, uparm, loarm, relative_x_axis, up=Vector((0, 0, 1))):
     rig_twist_limit(shoulder, uparm, 100)
 
     c = uparm.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', loarm)
-    c.axis_a = loarm, relative_x_axis
+    c.axis_a = uparm, relative_x_axis
     c.axis_b = loarm, 'Y'
-    c.max_swing = 90
+    if relative_x_axis == 'X':
+        scalar = 1
+    else:
+        scalar = -1
+
+    #87 prevents arm locking in most cases
+    c.max_swing = max(degrees_between(scalar*uparm.x_axis(), loarm), 87)
 
     antiparallel_limiter(uparm, loarm)
 
