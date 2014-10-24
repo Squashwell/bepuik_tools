@@ -32,6 +32,7 @@ from mathutils import Vector, Matrix, geometry
 
 import math
 import inspect
+import re
 
 AL_ANIMATABLE = 0
 AL_TARGET = 1
@@ -1050,12 +1051,13 @@ class MetaBonesBakeData():
         self.transform = transform
 
 
-
 def translation4(vec):
     return Matrix.Translation(vec).to_4x4()
 
+
 def metabones_get_phalange_segment(mbs, name, phalange_num, segment_num, suffixletter):
     return mbs["%s%s-%s.%s" % (name, phalange_num, segment_num, suffixletter)]
+
 
 def metabones_get_segment_siblings(mbs, name, s, suffixletter, max_num_phalange=5):
     segment_siblings = []
@@ -1065,6 +1067,7 @@ def metabones_get_segment_siblings(mbs, name, s, suffixletter, max_num_phalange=
             segment_siblings.append(segment)
 
     return segment_siblings
+
 
 def metabones_add_hand(mbs, suffixletter, proximal_bones, use_thumb):
     hand_name = "hand.%s" % suffixletter
@@ -1088,7 +1091,7 @@ def metabones_add_hand(mbs, suffixletter, proximal_bones, use_thumb):
 
     return hand
 
-import re
+
 def metabones_count_num_fingers(mbs, suffix):
     p = re.compile(r"finger[0-9]+-")
     matched_finger_prefixes = set()
@@ -1138,16 +1141,6 @@ def meta_create_full_body(ob, num_fingers, num_toes, foot_width, wrist_width, wr
     head_mat = spine_mat * translation4(spine_meta["neck"].tail) * Matrix.Rotation(head_pitch, 4, 'X')
 
     flip = Matrix.Scale(-1, 4, Vector((1, 0, 0)))
-
-
-    # bakedata_list = [MetaBonesBakeData(arm_meta, arm_mat, 'L'), MetaBonesBakeData(arm_meta, flip * arm_mat, 'R'),
-    #                  MetaBonesBakeData(leg_meta, leg_mat, 'L'), MetaBonesBakeData(leg_meta, flip * leg_mat, 'R'),
-    #                  MetaBonesBakeData(spine_meta, spine_mat),
-    #                  MetaBonesBakeData(head_meta, head_mat),
-    #                  MetaBonesBakeData(fingers_meta, fingers_mat, 'L'),
-    #                  MetaBonesBakeData(fingers_meta, flip * fingers_mat, 'R'),
-    #                  MetaBonesBakeData(toes_meta, toes_mat, 'L'),
-    #                  MetaBonesBakeData(toes_meta, flip * toes_mat, 'R')]
 
     bakedata_list = [MetaBonesBakeData(spine_meta, spine_mat), MetaBonesBakeData(head_meta, head_mat)]
 
@@ -1320,46 +1313,17 @@ def meta_init_spine(spine_lengths, use_belly, num_tail_bones, tail_length):
             parent = tail
         tail.use_bepuik_always_solve = True
 
-
-
-
-
-
-
     return mbg
 
 
 def meta_init_shoulder(shoulder_tail_vec):
     mbg = MetaBoneDict()
 
-    # arm_vec = wrist_vec - shoulder_tail_vec
-
-    # arm_up_vec = arm_vec.cross(Vector((0, 1, 0)))
-
-    # new_elbow_vec = (elbow_vec[0] * arm_vec) + shoulder_tail_vec
-    #
-    # new_elbow_vec[1] += (elbow_vec[1] * arm_vec.length)
-
     shoulder = mbg.new_bone("shoulder")
     shoulder.use_deform = True
     shoulder.head = Vector((0, 0, 0))
     shoulder.tail = shoulder_tail_vec.copy()
     shoulder.use_bepuik_ball_socket_rigidity = BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT
-    # mbg.
-
-    # uparm = mbg.new_bone("uparm")
-    # uparm.head = shoulder_tail_vec.copy()
-    # uparm.tail = new_elbow_vec.copy()
-    # uparm.parent = shoulder
-    # uparm.align_roll = arm_up_vec.copy()
-    # uparm.use_connect = True
-    #
-    # loarm = mbg.new_bone("loarm")
-    # loarm.head = new_elbow_vec.copy()
-    # loarm.tail = wrist_vec.copy()
-    # loarm.parent = uparm
-    # loarm.align_roll = arm_up_vec.copy()
-    # loarm.use_connect = True
 
     return mbg
 
@@ -1598,6 +1562,7 @@ def rig_swing_limit(a, b, swing):
     c = a.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', b)
     c.axis_a = b, 'Y'
     c.axis_b = b, 'Y'
+
     c.max_swing = swing
 
 
