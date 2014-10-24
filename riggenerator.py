@@ -2056,7 +2056,7 @@ def rig_full_body(meta_armature_obj, op=None):
 
     mbs.to_ob(rig_ob)
 
-    def do_driver_on_bone(driving_bone_name, driven_bone_name, driven_constraint_name):
+    def add_angular_joint_driver(driving_bone_name, driven_bone_name, driven_constraint_name):
         fcurve = rig_ob.pose.bones[driven_bone_name].constraints[driven_constraint_name].driver_add("bepuik_rigidity")
         fcurve.modifiers.remove(fcurve.modifiers[0])
         driver = fcurve.driver
@@ -2068,8 +2068,8 @@ def rig_full_body(meta_armature_obj, op=None):
         v.targets[0].id = rig_ob
         v.targets[0].bone_target = driving_bone_name
 
-    do_driver_on_bone(stiff_switch.name, hips.name, spine_stiff_angular_joint.name)
-    do_driver_on_bone(stiff_switch.name, spine.name, chest_stiff_angular_joint.name)
+    add_angular_joint_driver(stiff_switch.name, hips.name, spine_stiff_angular_joint.name)
+    add_angular_joint_driver(stiff_switch.name, spine.name, chest_stiff_angular_joint.name)
 
     organize_pchan_layers(rig_ob)
     rig_ob.bepuik_autorig.is_meta_armature = False
