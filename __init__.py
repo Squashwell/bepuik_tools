@@ -40,7 +40,7 @@ bl_info = {
     "name": "BEPUik Tools",
     "author": "Harrison Nordby, Ross Nordby",
     "version": (0, 4, 0),
-    "blender": (2, 72, 1),
+    "blender": (2, 72, 0),
     "description": "Automatically create humanoid BEPUik rigs and other rigging knickknacks.",
     "location": "View3D > Tool Shelf > BEPUik and View3D > Properties Shelf",
     "warning": "",
