@@ -124,7 +124,7 @@ class WidgetData():
         self.subsurface_levels = 0
         self.ob = None
 
-    def create(self, name):
+    def create_ob(self, name):
         mesh = bpy.data.meshes.new(name + " mesh")
         ob = bpy.data.objects.new(name, mesh)
         ob.data.from_pydata(self.vertices, self.edges, self.faces)
@@ -144,38 +144,38 @@ class WidgetData():
 
 def widgetdata_circle(radius):
     widgetdata = WidgetData()
-    vertices = [(0.7071068286895752, 2.980232238769531e-07, -0.7071065306663513),
-                (0.8314696550369263, 2.980232238769531e-07, -0.5555699467658997),
-                (0.9238795042037964, 2.682209014892578e-07, -0.3826831877231598),
-                (0.9807852506637573, 2.5331974029541016e-07, -0.19509011507034302),
-                (1.0, 2.365559055306221e-07, 1.6105803979371558e-07),
-                (0.9807853698730469, 2.2351741790771484e-07, 0.19509044289588928),
-                (0.9238796234130859, 2.086162567138672e-07, 0.38268351554870605),
-                (0.8314696550369263, 1.7881393432617188e-07, 0.5555704236030579),
-                (0.7071068286895752, 1.7881393432617188e-07, 0.7071070075035095),
-                (0.5555702447891235, 1.7881393432617188e-07, 0.8314698934555054),
-                (0.38268327713012695, 1.7881393432617188e-07, 0.923879861831665),
-                (0.19509008526802063, 1.7881393432617188e-07, 0.9807855486869812),
-                (-3.2584136988589307e-07, 1.1920928955078125e-07, 1.000000238418579),
-                (-0.19509072601795197, 1.7881393432617188e-07, 0.9807854294776917),
-                (-0.3826838731765747, 1.7881393432617188e-07, 0.9238795638084412),
-                (-0.5555707216262817, 1.7881393432617188e-07, 0.8314695358276367),
-                (-0.7071071863174438, 1.7881393432617188e-07, 0.7071065902709961),
-                (-0.8314700126647949, 1.7881393432617188e-07, 0.5555698871612549),
-                (-0.923879861831665, 2.086162567138672e-07, 0.3826829195022583),
-                (-0.9807853698730469, 2.2351741790771484e-07, 0.1950896978378296),
-                (-1.0, 2.365559907957504e-07, -7.290432222362142e-07),
-                (-0.9807850122451782, 2.5331974029541016e-07, -0.195091113448143),
-                (-0.9238790273666382, 2.682209014892578e-07, -0.38268423080444336),
-                (-0.831468939781189, 2.980232238769531e-07, -0.5555710196495056),
-                (-0.7071058750152588, 2.980232238769531e-07, -0.707107424736023),
-                (-0.555569052696228, 2.980232238769531e-07, -0.8314701318740845),
-                (-0.38268208503723145, 2.980232238769531e-07, -0.923879861831665),
-                (-0.19508881866931915, 2.980232238769531e-07, -0.9807853102684021),
-                (1.6053570561780361e-06, 2.980232238769531e-07, -0.9999997615814209),
-                (0.19509197771549225, 2.980232238769531e-07, -0.9807847142219543),
-                (0.3826850652694702, 2.980232238769531e-07, -0.9238786101341248),
-                (0.5555717945098877, 2.980232238769531e-07, -0.8314683437347412)]
+    vertices = [(0.7071068286895752, 0, -0.7071065306663513),
+                (0.8314696550369263, 0, -0.5555699467658997),
+                (0.9238795042037964, 0, -0.3826831877231598),
+                (0.9807852506637573, 0, -0.19509011507034302),
+                (1.0, 0, 0),
+                (0.9807853698730469, 0, 0.19509044289588928),
+                (0.9238796234130859, 0, 0.38268351554870605),
+                (0.8314696550369263, 0, 0.5555704236030579),
+                (0.7071068286895752, 0, 0.7071070075035095),
+                (0.5555702447891235, 0, 0.8314698934555054),
+                (0.38268327713012695, 0, 0.923879861831665),
+                (0.19509008526802063, 0, 0.9807855486869812),
+                (0, 0, 1),
+                (-0.19509072601795197, 0, 0.9807854294776917),
+                (-0.3826838731765747, 0, 0.9238795638084412),
+                (-0.5555707216262817, 0, 0.8314695358276367),
+                (-0.7071071863174438, 0, 0.7071065902709961),
+                (-0.8314700126647949, 0, 0.5555698871612549),
+                (-0.923879861831665, 0, 0.3826829195022583),
+                (-0.9807853698730469, 0, 0.1950896978378296),
+                (-1.0, 0, 0),
+                (-0.9807850122451782, 0, -0.195091113448143),
+                (-0.9238790273666382, 0, -0.38268423080444336),
+                (-0.831468939781189, 0, -0.5555710196495056),
+                (-0.7071058750152588, 0, -0.707107424736023),
+                (-0.555569052696228, 0, -0.8314701318740845),
+                (-0.38268208503723145, 0, -0.923879861831665),
+                (-0.19508881866931915, 0, -0.9807853102684021),
+                (0, 0, -1),
+                (0.19509197771549225, 0, -0.9807847142219543),
+                (0.3826850652694702, 0, -0.9238786101341248),
+                (0.5555717945098877, 0, -0.8314683437347412)]
     widgetdata.edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9), (9, 10), (10, 11),
                         (11, 12), (12, 13), (13, 14), (14, 15), (15, 16), (16, 17), (17, 18), (18, 19), (19, 20),
                         (20, 21), (21, 22), (22, 23), (23, 24), (24, 25), (25, 26), (26, 27), (27, 28), (28, 29),
@@ -203,6 +203,9 @@ def widgetdata_refresh_defaults():
         else:
             widget.ob = None
 
+def unlink_ob_from_all_scenes(ob):
+    for scene in bpy.data.scenes:
+        scene.objects.unlink(ob)
 
 def widgetdata_get(name, custom_widget_data=None):
     if name in bpy.data.objects:
@@ -211,27 +214,26 @@ def widgetdata_get(name, custom_widget_data=None):
         old_ob = None
 
     if custom_widget_data and name in custom_widget_data:
-        widget = custom_widget_data[name]
+        widgetdata = custom_widget_data[name]
     elif name in WIDGET_DATA_DEFAULTS:
-        widget = WIDGET_DATA_DEFAULTS[name]
+        widgetdata = WIDGET_DATA_DEFAULTS[name]
     else:
-        widget = None
+        widgetdata = None
 
-    new_ob = old_ob
-    if widget and not widget.ob:
-        widget.create(name)
-        new_ob = widget.ob
+    if widgetdata and not widgetdata.ob:
+        if old_ob:
+            old_ob.name += "old"
+            unlink_ob_from_all_scenes(old_ob)
 
-    if old_ob and old_ob != new_ob and old_ob.name in bpy.context.scene.objects:
-        bpy.context.scene.objects.unlink(old_ob)
+        assert isinstance(widgetdata, WidgetData)
+        widgetdata.create_ob(name)
+        new_ob = widgetdata.ob
 
-    if new_ob and new_ob.name not in bpy.context.scene.objects:
         bpy.context.scene.objects.link(new_ob)
-
-    new_ob.layers = OB_LAYERS_WIDGET
-    new_ob.name = name
-
-    return new_ob
+        new_ob.layers = OB_LAYERS_WIDGET
+        return new_ob
+    else:
+        return old_ob
 
 
 def pydata_get_edges(obj):
@@ -1595,6 +1597,8 @@ def rig_full_body(meta_armature_obj, op=None):
     neck = mbs["neck"]
     ribsl = mbs["ribs.L"]
     ribsr = mbs["ribs.R"]
+    legl = mbs["upleg.L"]
+    legr = mbs["upleg.R"]
 
     bpy.ops.object.mode_set(mode='OBJECT')
     meta_armature_obj.select = False
@@ -1745,10 +1749,25 @@ def rig_full_body(meta_armature_obj, op=None):
 
     hips.parent = root
 
-    rig_new_target(mbs, "hips target", hips, root)
+    hips_target = rig_new_target(mbs, "hips target", hips, root)
     rig_new_target(mbs, "chest target", chest, root)
     rig_new_target(mbs, "spine target", spine, root)
     rig_new_target(mbs, "head target", head, root)
+
+    #replace default hips_target widget with new hips circle widget
+    if legl and legr:
+        hips_width_world = (legl.head - legr.head).length
+    else:
+        hips_width_world = .25
+
+    hips_width_local = hips_width_world / hips_target.length()
+
+    wd = custom_widget_data["hips target"] = widgetdata_circle(hips_width_local/2)
+    wd.edges.append((12, 28))
+
+    hips_target.custom_shape = widget_get("hips target")
+    #end create hips circle widget
+
 
     hips_down_mat = hips.matrix() * Matrix.Rotation(math.pi, 4, 'Z')
     hips_forward_mat = hips_down_mat * Matrix.Rotation(math.pi / 2, 4, 'X')
