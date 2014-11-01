@@ -205,7 +205,8 @@ def widgetdata_refresh_defaults():
 
 def unlink_ob_from_all_scenes(ob):
     for scene in bpy.data.scenes:
-        scene.objects.unlink(ob)
+        if ob.name in scene.objects:
+            scene.objects.unlink(ob)
 
 def widgetdata_get(name, custom_widget_data=None):
     if name in bpy.data.objects:
