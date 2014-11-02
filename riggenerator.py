@@ -2193,10 +2193,10 @@ def rig_hips_to_upleg(hips, upleg, upleg_parent, measurement_axis, relative_x_ax
     c.max_swing = 165
 
     #prevent leg from going too far to the opposite side
-    c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', upleg, name="%s swing side limit" % upleg.name)
-    c.axis_a = upleg, relative_x_axis
-    c.axis_b = upleg, 'Y'
-    c.max_swing = 110
+    #c = hips.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', upleg, name="%s swing side limit" % upleg.name)
+    #c.axis_a = upleg, relative_x_axis
+    #c.axis_b = upleg, 'Y'
+    #c.max_swing = 110
 
 
 def rig_bone_to_bone_revolute_swing_center(fa, fb, swing_center, swing_angle_max, swing_angle_min):
