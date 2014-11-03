@@ -2063,6 +2063,7 @@ def rig_full_body(meta_armature_obj, op=None):
 
         foot_target.parent = root
         rig_leg(upleg, loleg, foot, foot_target, leg_relative_x_axis)
+        rig_new_target(mbs, name="loleg target.%s" % suffixletter, controlledmetabone=loleg, parent=root)
 
         rig_foot()
 
