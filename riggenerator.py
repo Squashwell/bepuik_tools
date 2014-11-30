@@ -66,7 +66,7 @@ FOOT_SUBSTRINGS = ('toe',)
 TORSO_SUBSTRINGS = ('spine', 'hip', 'chest', 'torso', 'tail', 'belly')
 RIB_SUBSTRINGS = ('rib', 'clavicle')
 HAND_SUBSTRINGS = ('finger', 'thumb', 'palm',)
-HEAD_SUBSTRINGS = ('head', 'neck', 'eye', 'jaw', 'ear')
+HEAD_SUBSTRINGS = ('head', 'neck', 'eye', 'jaw', 'ear', 'nose', 'brow', 'lip', 'chin')
 ROOT_SUBSTRINGS = ('root',)
 TARGET_SUBSTRINGS = ('target',)
 
