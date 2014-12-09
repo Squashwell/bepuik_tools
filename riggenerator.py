@@ -1600,6 +1600,8 @@ def rig_full_body(meta_armature_obj, op=None):
     ribsr = mbs["ribs.R"]
     legl = mbs["upleg.L"]
     legr = mbs["upleg.R"]
+    shoulderl = mbs["shoulder.L"]
+    shoulderr = mbs["shoulder.R"]
 
     bpy.ops.object.mode_set(mode='OBJECT')
     meta_armature_obj.select = False
@@ -1748,24 +1750,32 @@ def rig_full_body(meta_armature_obj, op=None):
     hips.parent = root
 
     hips_target = rig_new_target(mbs, "hips target", hips, root)
-    rig_new_target(mbs, "chest target", chest, root)
+    chest_target = rig_new_target(mbs, "chest target", chest, root)
     rig_new_target(mbs, "spine target", spine, root)
     rig_new_target(mbs, "head target", head, root)
 
-    #replace default hips_target widget with new hips circle widget
+    def replace_target_widget_with_circle_widget(width_world, target):
+        #replace default hips_target widget with new hips circle widget
+
+        width_local = width_world / target.length()
+
+        wd = custom_widget_data[target.name] = widgetdata_circle(width_local/2)
+        wd.edges.append((12, 28))
+
+        target.custom_shape = widget_get(target.name)
+        #end create hips circle widget
+
     if legl and legr:
-        hips_width_world = (legl.head - legr.head).length
+        width = (legr.head - legl.head).length
     else:
-        hips_width_world = .25
+        width = .25
+    replace_target_widget_with_circle_widget(width, hips_target)
 
-    hips_width_local = hips_width_world / hips_target.length()
-
-    wd = custom_widget_data["hips target"] = widgetdata_circle(hips_width_local/2)
-    wd.edges.append((12, 28))
-
-    hips_target.custom_shape = widget_get("hips target")
-    #end create hips circle widget
-
+    if shoulderl and shoulderr:
+        width = (shoulderl.tail - shoulderr.tail).length * .85
+    else:
+        width = .3
+    replace_target_widget_with_circle_widget(width, chest_target)
 
     hips_down_mat = hips.matrix() * Matrix.Rotation(math.pi, 4, 'Z')
     hips_forward_mat = hips_down_mat * Matrix.Rotation(math.pi / 2, 4, 'X')
