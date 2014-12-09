@@ -43,6 +43,7 @@ AL_BEPUIK_BONE = 4
 AL_SPINE = 17
 AL_HEAD = 16
 AL_ROOT = 18
+AL_FACE = 19
 
 AL_ARM_L = 8
 AL_HAND_L = 9
@@ -65,26 +66,35 @@ LEG_SUBSTRINGS = ('leg', 'foot', 'knee', 'heel', 'ball',)
 FOOT_SUBSTRINGS = ('toe',)
 TORSO_SUBSTRINGS = ('spine', 'hip', 'chest', 'torso', 'tail', 'belly')
 RIB_SUBSTRINGS = ('rib', 'clavicle')
-HAND_SUBSTRINGS = ('finger', 'thumb', 'palm',)
-HEAD_SUBSTRINGS = ('head', 'neck', 'eye', 'jaw', 'ear', 'nose', 'brow', 'lip', 'chin')
+HAND_SUBSTRINGS = ('finger', 'thumb', 'palm')
+HEAD_SUBSTRINGS = ('head', 'neck', 'eye target')
+FACE_SUBSTRINGS = ('eye', 'jaw', 'ear', 'nose', 'brow', 'lip', 'chin', 'cheek')
 ROOT_SUBSTRINGS = ('root',)
 TARGET_SUBSTRINGS = ('target',)
 
 SUBSTRING_SETS = [HAND_SUBSTRINGS, ARM_SUBSTRINGS, LEG_SUBSTRINGS, FOOT_SUBSTRINGS, TORSO_SUBSTRINGS, RIB_SUBSTRINGS,
-                  HEAD_SUBSTRINGS, ROOT_SUBSTRINGS, TARGET_SUBSTRINGS]
+                  HEAD_SUBSTRINGS, ROOT_SUBSTRINGS, TARGET_SUBSTRINGS, FACE_SUBSTRINGS]
 
-MAP_SUBSTRING_SET_TO_ARMATURELAYER = {(ARM_SUBSTRINGS, 'L'): AL_ARM_L, (HAND_SUBSTRINGS, 'L'): AL_HAND_L,
-                                      (LEG_SUBSTRINGS, 'L'): AL_LEG_L, (FOOT_SUBSTRINGS, 'L'): AL_FOOT_L,
-                                      (RIB_SUBSTRINGS, 'L'): AL_RIB_L, (TORSO_SUBSTRINGS, None): AL_SPINE,
-                                      (TORSO_SUBSTRINGS, ''): AL_SPINE, (TORSO_SUBSTRINGS, 'L'): AL_SPINE,
-                                      (TORSO_SUBSTRINGS, 'R'): AL_SPINE, (ROOT_SUBSTRINGS, None): AL_ROOT,
-                                      (ROOT_SUBSTRINGS, ''): AL_ROOT, (ROOT_SUBSTRINGS, 'L'): AL_ROOT,
-                                      (ROOT_SUBSTRINGS, 'R'): AL_ROOT, (HEAD_SUBSTRINGS, None): AL_HEAD,
-                                      (HEAD_SUBSTRINGS, ''): AL_HEAD, (HEAD_SUBSTRINGS, 'L'): AL_HEAD,
-                                      (HEAD_SUBSTRINGS, 'R'): AL_HEAD, (ARM_SUBSTRINGS, 'R'): AL_ARM_R,
-                                      (HAND_SUBSTRINGS, 'R'): AL_HAND_R, (LEG_SUBSTRINGS, 'R'): AL_LEG_R,
-                                      (FOOT_SUBSTRINGS, 'R'): AL_FOOT_R, (RIB_SUBSTRINGS, 'R'): AL_RIB_R,
-                                      (TARGET_SUBSTRINGS, 'L'): AL_TARGET, (TARGET_SUBSTRINGS, 'R'): AL_TARGET}
+MAP_SUBSTRING_SET_TO_ARMATURELAYER = {}
+
+def map_substring_set(substring_set, suffixletter_layer_pairs):
+    global MAP_SUBSTRING_SET_TO_ARMATURELAYER
+    for suffixletter_layer_pair in suffixletter_layer_pairs:
+        suffix, layer = suffixletter_layer_pair
+        MAP_SUBSTRING_SET_TO_ARMATURELAYER[(substring_set, suffix)] = layer
+
+def map_substring_set_all_suffix_go_to_same_layer(substring_set, layer):
+    map_substring_set(substring_set, (('L', layer), ('R', layer), (None, layer), ('', layer)))
+
+map_substring_set(ARM_SUBSTRINGS, (('L', AL_ARM_L), ('R', AL_ARM_R)))
+map_substring_set(LEG_SUBSTRINGS, (('L', AL_LEG_L), ('R', AL_LEG_R)))
+map_substring_set(FOOT_SUBSTRINGS, (('L', AL_FOOT_L), ('R', AL_FOOT_R)))
+map_substring_set(RIB_SUBSTRINGS, (('L', AL_RIB_L), ('R', AL_RIB_R)))
+map_substring_set_all_suffix_go_to_same_layer(TORSO_SUBSTRINGS, AL_SPINE)
+map_substring_set_all_suffix_go_to_same_layer(HEAD_SUBSTRINGS, AL_HEAD)
+map_substring_set_all_suffix_go_to_same_layer(FACE_SUBSTRINGS, AL_FACE)
+map_substring_set_all_suffix_go_to_same_layer(TARGET_SUBSTRINGS, AL_TARGET)
+map_substring_set_all_suffix_go_to_same_layer(ROOT_SUBSTRINGS, AL_ROOT)
 
 FINGER_TOE_RIGIDITY = 3
 
@@ -508,6 +518,7 @@ def layout_rig_layers(layout, ob):
 
     top = box1.column(align=True)
 
+    top.prop(data, 'layers', toggle=True, index=AL_FACE, text="Face")
     top.prop(data, 'layers', toggle=True, index=AL_HEAD, text="Head")
     top.prop(data, 'layers', toggle=True, index=AL_SPINE, text="Spine")
     top.prop(data, 'layers', toggle=True, index=AL_ROOT, text="Root")
@@ -2507,7 +2518,6 @@ def organize_pchan_layer(pchan, bone_hint_str=None, is_bepuik_target=False):
                 if (substring_set, suffixletter) in MAP_SUBSTRING_SET_TO_ARMATURELAYER:
                     index_to_add = MAP_SUBSTRING_SET_TO_ARMATURELAYER[(substring_set, suffixletter)]
                     layer_indices.add(index_to_add)
-                    break
 
     bone.layers = [True if i in layer_indices else False for i in range(32)]
 
