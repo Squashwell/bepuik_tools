@@ -61,12 +61,15 @@ AL_START = {AL_ARM_L, AL_ARM_R, AL_LEG_L, AL_LEG_R, AL_SPINE, AL_HEAD, AL_HAND_L
 
 BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT = 16
 
+#put bones containing the following substrings on different layers depending on the bone's suffix letter
 ARM_SUBSTRINGS = ('shoulder', 'loarm', 'uparm', 'hand', 'elbow',)
 LEG_SUBSTRINGS = ('leg', 'foot', 'knee', 'heel', 'ball',)
 FOOT_SUBSTRINGS = ('toe',)
 TORSO_SUBSTRINGS = ('spine', 'hip', 'chest', 'torso', 'tail', 'belly')
 RIB_SUBSTRINGS = ('rib', 'clavicle')
 HAND_SUBSTRINGS = ('finger', 'thumb', 'palm')
+
+#put bones containing the following substrings on same layer regardless of bone's suffix letter
 HEAD_SUBSTRINGS = ('head', 'neck', 'eye target')
 FACE_SUBSTRINGS = ('eye', 'jaw', 'ear', 'nose', 'brow', 'lip', 'chin', 'cheek')
 ROOT_SUBSTRINGS = ('root',)
@@ -90,6 +93,9 @@ map_substring_set(ARM_SUBSTRINGS, (('L', AL_ARM_L), ('R', AL_ARM_R)))
 map_substring_set(LEG_SUBSTRINGS, (('L', AL_LEG_L), ('R', AL_LEG_R)))
 map_substring_set(FOOT_SUBSTRINGS, (('L', AL_FOOT_L), ('R', AL_FOOT_R)))
 map_substring_set(RIB_SUBSTRINGS, (('L', AL_RIB_L), ('R', AL_RIB_R)))
+map_substring_set(HAND_SUBSTRINGS, (('L', AL_HAND_L), ('R', AL_HAND_R)))
+
+
 map_substring_set_all_suffix_go_to_same_layer(TORSO_SUBSTRINGS, AL_SPINE)
 map_substring_set_all_suffix_go_to_same_layer(HEAD_SUBSTRINGS, AL_HEAD)
 map_substring_set_all_suffix_go_to_same_layer(FACE_SUBSTRINGS, AL_FACE)
