@@ -1643,9 +1643,10 @@ def rig_full_body(meta_armature_obj, op=None):
     eye_target.parent = root
     eye_target.show_wire = True
 
-    jaw.use_deform = True
-    jaw.lock_location = (True, True, True)
-    jaw.parent = head
+    if jaw:
+        jaw.use_deform = True
+        jaw.lock_location = (True, True, True)
+        jaw.parent = head
 
     def rig_rib(rib):
         rib.parent = chest
