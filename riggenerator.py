@@ -1636,12 +1636,24 @@ def rig_full_body(meta_armature_obj, op=None):
     root.custom_shape = widget_get(WIDGET_ROOT)
     root.show_wire = True
 
-    eye_target = mbs.new_bone('eye target')
-    eye_target.head = Vector((0, eyel.tail[1] - .5, eyel.tail[2]))
-    eye_target.tail = eye_target.head + Vector((0, -(eyel.length() + eyer.length()), 0))
-    eye_target.custom_shape = widget_get(WIDGET_EYE_TARGET)
-    eye_target.parent = root
-    eye_target.show_wire = True
+    if eyel and eyer:
+        avg_eye_length = (eyel.length() + eyer.length()) / 2
+        avg_eye_tail_loc = (eyel.tail + eyer.tail) / 2
+        eye_target_head = Vector((0, avg_eye_tail_loc[1] - .5, avg_eye_tail_loc[2]))
+    elif eyel:
+        avg_eye_length = eyel.length()
+        eye_target_head = Vector((0, eyel.tail[1] - .5, eyel.tail[2]))
+    elif eyer:
+        avg_eye_length = eyer.length()
+        eye_target_head = Vector((0, eyer.tail[1] - .5, eyer.tail[2]))
+
+    if eyel or eyer:
+        eye_target = mbs.new_bone('eye target')
+        eye_target.head = eye_target_head
+        eye_target.tail = eye_target.head + Vector((0, -(avg_eye_length*2), 0))
+        eye_target.custom_shape = widget_get(WIDGET_EYE_TARGET)
+        eye_target.parent = root
+        eye_target.show_wire = True
 
     if jaw:
         jaw.use_deform = True
