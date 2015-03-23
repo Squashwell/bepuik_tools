@@ -71,7 +71,7 @@ HAND_SUBSTRINGS = ('finger', 'thumb', 'palm')
 
 #put bones containing the following substrings on same layer regardless of bone's suffix letter
 HEAD_SUBSTRINGS = ('head', 'neck', 'eye target')
-FACE_SUBSTRINGS = ('eye', 'jaw', 'ear', 'nose', 'brow', 'lip', 'chin', 'cheek', 'tongue')
+FACE_SUBSTRINGS = ('eye', 'jaw', 'ear', 'nose', 'brow', 'lip', 'chin', 'cheek', 'tongue', 'face')
 ROOT_SUBSTRINGS = ('root',)
 TARGET_SUBSTRINGS = ('target',)
 
