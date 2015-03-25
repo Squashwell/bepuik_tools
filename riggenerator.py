@@ -65,7 +65,7 @@ BEPUIK_BALL_SOCKET_RIGIDITY_DEFAULT = 16
 ARM_SUBSTRINGS = ('shoulder', 'loarm', 'uparm', 'hand', 'elbow',)
 LEG_SUBSTRINGS = ('leg', 'foot', 'knee', 'heel', 'ball',)
 FOOT_SUBSTRINGS = ('toe',)
-TORSO_SUBSTRINGS = ('spine', 'hip', 'chest', 'torso', 'tail', 'belly')
+TORSO_SUBSTRINGS = ('spine', 'hip', 'chest', 'torso', 'tail', 'belly', 'back', 'groin')
 RIB_SUBSTRINGS = ('rib', 'clavicle')
 HAND_SUBSTRINGS = ('finger', 'thumb', 'palm')
 
