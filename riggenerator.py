@@ -1789,10 +1789,10 @@ def rig_full_body(meta_armature_obj, op=None):
 
         width_local = width_world / target.length()
 
-        wd = custom_widget_data[target.name] = widgetdata_circle(width_local/2)
+        wd = custom_widget_data["widget %s" % target.name] = widgetdata_circle(width_local/2)
         wd.edges.append((12, 28))
 
-        target.custom_shape = widget_get(target.name)
+        target.custom_shape = widget_get("widget %s" % target.name)
         #end create hips circle widget
 
     if legl and legr:
