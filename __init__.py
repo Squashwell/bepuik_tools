@@ -817,33 +817,66 @@ class BEPUikObjectProperties(bpy.types.PropertyGroup):
     use_bepuik_tail = BoolProperty(default=False, options=set())
     use_simple_hand = BoolProperty(default=False, options=set())
 
-
-
-
-class BUILTIN_KSI_BEPUikControlsTargets(bpy.types.KeyingSetInfo):
-    """Insert a keyframe for all BEPUik Controls' rigidities and their targets' location and rotation"""
-    bl_idname = "BEPUikControlsTargets"
-    bl_label = "BEPUik Controls and Targets"
-
-    poll = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.poll
-
-    def iterator(ksi, context, ks):
-        ksi.targets = set()
-        ob = context.active_object
+def find_selected_controls_and_targets(ob):
+        selected_controls = set()
+        selected_targets = set()
+        targets_to_controls = {}
+        valid_bepuik_controls = set()
 
         for pchan in ob.pose.bones:
             if pchan.use_bepuik:
                 for con in pchan.constraints:
                     if con.type == 'BEPUIK_CONTROL':
-                        if con.connection_subtarget:
-                            ksi.targets.add(con.connection_subtarget)
+                        if con.connection_subtarget and con.connection_subtarget in ob.pose.bones:
+                            valid_bepuik_controls.add(con)
+
+                            if con.connection_subtarget not in targets_to_controls:
+                                targets_to_controls[con.connection_subtarget] = set()
+
+                            targets_to_controls[con.connection_subtarget].add(con)
+
+        for pchan in ob.pose.bones:
+            if pchan.bone.select:
+                if pchan.name in targets_to_controls:
+                    selected_targets.add(pchan.name)
+
+                if pchan.use_bepuik:
+                    for con in pchan.constraints:
+                        if con in valid_bepuik_controls:
+                            selected_controls.add(con)
+
+        for selected_control in selected_controls:
+            selected_targets.add(selected_control.connection_subtarget)
+
+        for selected_target in selected_targets:
+            for control in targets_to_controls[selected_target]:
+                selected_controls.add(control)
+
+        return selected_controls, selected_targets
+
+class BUILTIN_KSI_BEPUikLocRotRigidities(bpy.types.KeyingSetInfo):
+    """Insert a keyframe for selected bones location, rotation and their associated BEPUik Control rigidities"""
+    bl_idname = "BEPUikLocRotRigidities"
+    bl_label = "BEPUik LocRotRigidities"
+
+    poll = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.poll
+
+    def iterator(ksi, context, ks):
+        ob = context.active_object
+
+        ksi.selected_controls, ksi.selected_targets = find_selected_controls_and_targets(ob)
+
+        for pchan in ob.pose.bones:
+            if pchan.bone.select:
+                ksi.selected_targets.add(pchan.name)
 
         for pchan in ob.pose.bones:
             ksi.generate(context, ks, pchan)
 
 
+
     def generate(ksi, context, ks, pchan):
-        if pchan.name in ksi.targets:
+        if pchan.name in ksi.selected_targets:
             # loc, rot, scale - only include unlocked ones
             ksi.doLoc(ks, pchan)
 
@@ -852,12 +885,50 @@ class BUILTIN_KSI_BEPUikControlsTargets(bpy.types.KeyingSetInfo):
             else:
                 ksi.doRot3d(ks, pchan)
 
-        if pchan.use_bepuik:
-            for con in pchan.constraints:
-                if con.type == 'BEPUIK_CONTROL':
-                    ksi.addProp(ks, con, 'bepuik_rigidity')
-                    ksi.addProp(ks, con, 'orientation_rigidity')
-                    ksi.addProp(ks, con, 'use_hard_rigidity')
+        for con in pchan.constraints:
+            if con in ksi.selected_controls:
+                ksi.addProp(ks, con, 'bepuik_rigidity')
+                ksi.addProp(ks, con, 'orientation_rigidity')
+                ksi.addProp(ks, con, 'use_hard_rigidity')
+
+    addProp = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.addProp
+    doLoc = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doLoc
+    doRot3d = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doRot3d
+    doRot4d = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doRot4d
+    #doScale = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doScale
+
+
+class BUILTIN_KSI_BEPUikTargetsLocRotRigidities(bpy.types.KeyingSetInfo):
+    """Insert a keyframe for selected BEPUik Controls' rigidities and their targets' location and rotation"""
+    bl_idname = "BEPUikTargetsLocRotRigidities"
+    bl_label = "BEPUik Targets LocRotRigidities"
+
+    poll = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.poll
+
+    def iterator(ksi, context, ks):
+        ob = context.active_object
+
+        ksi.selected_controls, ksi.selected_targets = find_selected_controls_and_targets(ob)
+
+        for pchan in ob.pose.bones:
+            ksi.generate(context, ks, pchan)
+
+
+    def generate(ksi, context, ks, pchan):
+        if pchan.name in ksi.selected_targets:
+            # loc, rot, scale - only include unlocked ones
+            ksi.doLoc(ks, pchan)
+
+            if pchan.rotation_mode in {'QUATERNION', 'AXIS_ANGLE'}:
+                ksi.doRot4d(ks, pchan)
+            else:
+                ksi.doRot3d(ks, pchan)
+
+        for con in pchan.constraints:
+            if con in ksi.selected_controls:
+                ksi.addProp(ks, con, 'bepuik_rigidity')
+                ksi.addProp(ks, con, 'orientation_rigidity')
+                ksi.addProp(ks, con, 'use_hard_rigidity')
 
     addProp = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.addProp
     doLoc = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doLoc
