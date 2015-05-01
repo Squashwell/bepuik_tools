@@ -935,6 +935,31 @@ class BUILTIN_KSI_BEPUikTargetsLocRotRigidities(bpy.types.KeyingSetInfo):
     doRot3d = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doRot3d
     doRot4d = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.doRot4d
 
+class BUILTIN_KSI_BEPUikRigidities(bpy.types.KeyingSetInfo):
+    """Insert a keyframe for selected BEPUik Controls' rigidities"""
+    bl_idname = "BEPUikRigidities"
+    bl_label = "BEPUik Rigidities"
+
+    poll = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.poll
+
+    def iterator(ksi, context, ks):
+        ob = context.active_object
+
+        ksi.selected_controls, ksi.selected_targets = find_selected_controls_and_targets(ob)
+
+        for pchan in ob.pose.bones:
+            ksi.generate(context, ks, pchan)
+
+
+    def generate(ksi, context, ks, pchan):
+        for con in pchan.constraints:
+            if con in ksi.selected_controls:
+                ksi.addProp(ks, con, 'bepuik_rigidity')
+                ksi.addProp(ks, con, 'orientation_rigidity')
+                ksi.addProp(ks, con, 'use_hard_rigidity')
+
+    addProp = keyingsets_builtins.BUILTIN_KSI_WholeCharacter.addProp
+
 def register():
     bpy.utils.register_module(__name__)
     bpy.types.Object.bepuik_autorig = PointerProperty(type=BEPUikObjectProperties)
