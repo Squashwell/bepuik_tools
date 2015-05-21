@@ -29,6 +29,7 @@
 import bpy
 
 from mathutils import Vector, Matrix, geometry
+from rna_prop_ui import rna_idprop_ui_prop_get
 
 import math
 import inspect
@@ -1746,27 +1747,6 @@ def rig_full_body(meta_armature_obj, op=None):
     spine_stiffness.rotation_mode = 'YZX'
     spine_stiffness.lock_rotation = (False, True, False)
 
-    stiff_switch = mbs.new_bone("torso stiff switch")
-    stiff_switch_offset = -chest.align_roll * (chest.length()/5)
-    stiff_switch.head = chest.head.copy() + stiff_switch_offset
-    stiff_switch.tail = stiff_switch.head + (stiff_switch_offset * 1.3)
-    stiff_switch.custom_shape = widget_get(WIDGET_STIFF_SWITCH)
-    stiff_switch.show_wire = True
-    stiff_switch.align_roll = chest.y_axis()
-    stiff_switch.parent = chest
-    stiff_switch.lock_location = (True, True, True)
-    stiff_switch.rotation_mode = 'ZYX'
-    stiff_switch.lock_scale = (True, True, True)
-    stiff_switch.lock_rotation = (False, True, True)
-
-    c = stiff_switch.new_meta_blender_constraint('LIMIT_ROTATION')
-    c.use_limit_x = True
-    c.use_limit_y = True
-    c.use_limit_z = True
-    c.use_transform_limit = True
-    c.owner_space = 'LOCAL'
-    c.max_x = 1.570797
-
     spine_stiff_angular_joint = hips.new_meta_blender_constraint('BEPUIK_ANGULAR_JOINT', spine)
     spine_stiff_angular_joint.relative_orientation = spine_stiffness
     spine_stiff_angular_joint.use_rest_offset = True
@@ -2114,20 +2094,28 @@ def rig_full_body(meta_armature_obj, op=None):
 
     mbs.to_ob(rig_ob)
 
-    def add_angular_joint_driver(driving_bone_name, driven_bone_name, driven_constraint_name):
+
+
+    prop = rna_idprop_ui_prop_get(rig_ob.pose.bones["spine"], "torso stiffness", create=True)
+    prop["min"] = 0.0
+    #prop["max"] = 2.0
+    prop["soft_min"] = 0.0
+    prop["soft_max"] = 2.0
+
+    rig_ob.pose.bones["spine"]["torso stiffness"] = 2.0
+
+    def add_angular_joint_driver(driven_bone_name, driven_constraint_name):
         fcurve = rig_ob.pose.bones[driven_bone_name].constraints[driven_constraint_name].driver_add("bepuik_rigidity")
         fcurve.modifiers.remove(fcurve.modifiers[0])
         driver = fcurve.driver
         driver.type = 'AVERAGE'
         v = driver.variables.new()
-        v.type = 'TRANSFORMS'
-        v.targets[0].transform_space = 'LOCAL_SPACE'
-        v.targets[0].transform_type = 'ROT_X'
+        v.type = 'SINGLE_PROP'
         v.targets[0].id = rig_ob
-        v.targets[0].bone_target = driving_bone_name
+        v.targets[0].data_path = r'pose.bones["spine"]["torso stiffness"]'
 
-    add_angular_joint_driver(stiff_switch.name, hips.name, spine_stiff_angular_joint.name)
-    add_angular_joint_driver(stiff_switch.name, spine.name, chest_stiff_angular_joint.name)
+    add_angular_joint_driver(hips.name, spine_stiff_angular_joint.name)
+    add_angular_joint_driver(spine.name, chest_stiff_angular_joint.name)
 
     organize_pchan_layers(rig_ob)
     rig_ob.bepuik_autorig.is_meta_armature = False

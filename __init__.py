@@ -292,6 +292,12 @@ class BEPUikAutoRigLayers(bpy.types.Panel):
 
         middle = layout.row()
 
+        if "spine" in ob.pose.bones:
+            if "torso stiffness" in ob.pose.bones["spine"]:
+                middle.prop(ob.pose.bones["spine"], '["torso stiffness"]', text="Torso Stiffness")
+
+        middle = layout.row()
+
         col = middle.column(align=True)
         col.label("Left")
         col.operator(BEPUikAutoRigTweakFingers.bl_idname).suffix = ".L"
