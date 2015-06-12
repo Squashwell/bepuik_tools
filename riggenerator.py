@@ -2428,8 +2428,6 @@ def rig_arm(shoulder, uparm, loarm, relative_x_axis, up=Vector((0, 0, 1))):
 
     antiparallel_limiter(shoulder, uparm, 30)
 
-    rig_twist_limit(shoulder, uparm, 100)
-
     c = uparm.new_meta_blender_constraint('BEPUIK_SWING_LIMIT', loarm)
     c.axis_a = uparm, relative_x_axis
     c.axis_b = loarm, 'Y'
