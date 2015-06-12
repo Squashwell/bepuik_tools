@@ -878,6 +878,9 @@ class MetaBone():
     def z_axis(self):
         return self.x_axis().cross(self.y_axis()).normalized()
 
+    def center(self):
+        return (self.head + self.tail) / 2
+
     def matrix(self):
         m = Matrix.Identity(4)
 
@@ -1506,26 +1509,17 @@ def meta_init_leg(upleg_vec, knee_vec, ankle_vec, toe_vec, foot_width):
     foot.bepuik_ball_socket_rigidity = 1000
     foot.use_connect = True
 
-    loleg_vec = (loleg.tail - loleg.head)
-    foot_vec = (foot.tail - foot.head)
-    vec_to_heel = loleg_vec.normalized() * ((loleg_vec.length + foot_vec.length) * 2)
+    heel_floor_pos = geometry.intersect_line_plane(loleg.head, loleg.tail, Vector((0, 0, 0)), Vector((0, 0, 1)))
 
-    foot_target_a = geometry.intersect_line_plane(loleg.head, loleg.head + vec_to_heel, foot.tail, Vector((0, 0, 1)))
-    foot_target_b = foot.tail.copy()
+    if heel_floor_pos is None:
+        heel_floor_pos = loleg.tail + (loleg.y_axis() * (foot.length()/2))
 
-    if foot_target_a:
-        foot_target_length = foot_vec.length * 1.1
-        ball_to_heel_dir = (foot_target_a - foot_target_b).normalized()
+    heel_width_axis = Vector((-foot.y_axis()[1], foot.y_axis()[0], 0)).normalized()
+    offest_dir_from_center_of_heel = heel_width_axis * foot_width / 2
 
-        foot_target = mbg.new_bone("foot target")
-        foot_target.head = foot.tail.copy() + ball_to_heel_dir * foot_target_length
-        foot_target.tail = foot.tail.copy()
-
-        foot_width_bone = mbg.new_bone("foot width")
-        foot_width_bone.head = foot_target.head.copy()
-        foot_width_bone.head += foot_target.y_axis() * foot_target.length()
-        foot_width_bone.head += foot_target.x_axis() * foot_width / 2
-        foot_width_bone.tail = foot_width_bone.head + (-foot_target.x_axis() * foot_width)
+    heel_bone = mbg.new_bone("heel")
+    heel_bone.head = heel_floor_pos - offest_dir_from_center_of_heel
+    heel_bone.tail = heel_floor_pos + offest_dir_from_center_of_heel
 
     return mbg
 
@@ -1811,8 +1805,7 @@ def rig_full_body(meta_armature_obj, op=None):
         shoulder = mbs["shoulder.%s" % suffixletter]
         uparm = mbs["uparm.%s" % suffixletter]
         loarm = mbs["loarm.%s" % suffixletter]
-        foot_target = mbs["foot target.%s" % suffixletter]
-        foot_width_bone = mbs["foot width.%s" % suffixletter]
+        heel_bone = mbs["heel.%s" % suffixletter]
 
         def get_phalange_segment(name, p, s):
             return mbs["%s%s-%s.%s" % (name, p, s, suffixletter)]
@@ -1947,15 +1940,10 @@ def rig_full_body(meta_armature_obj, op=None):
 
             if len(s1_bones) > 1:
                 foot_width_world = (s1_bones[0].head - s1_bones[len(s1_bones) - 1].head).length
-            elif foot_width_bone:
-                foot_width_world = foot_width_bone.length()
+            elif heel_bone:
+                foot_width_world = heel_bone.length()
             else:
                 foot_width_world = foot.length() / 2
-
-            #the foot width bone is only needed as a reference for single toed characters, after it's used
-            #delete it because the final rig doesn't need it.
-            if foot_width_bone:
-                mbs.pop(foot_width_bone.name)
 
             multitarget_segments = s1_bones
             final_segments = get_final_segments("toe")
@@ -1969,14 +1957,25 @@ def rig_full_body(meta_armature_obj, op=None):
             #            heel.align_roll = Vector((0,-1,0))
             #            heel.parent = foot
 
+            foot_target = mbs.new_bone("foot target.%s" % suffixletter)
+            foot_target.head = heel_bone.center()
+            foot_target.tail = Vector((foot.tail[0], foot.tail[1], 0))
             foot_target_custom_shape_name = "%s target.%s" % (WIDGET_FOOT, suffixletter)
             custom_widget_data[foot_target_custom_shape_name] = widgetdata_pad(
                 width=foot_width_world / foot_target.length(), length=1.0, mid=.3)
             foot_target.show_wire = True
             foot_target.custom_shape = widget_get(foot_target_custom_shape_name)
+            foot_target.parent = root
+
+            rig_target_affected(foot_target, foot, hard_rigidity=True, use_rest_offset=True)
+
+            #the heel bone is only needed as a reference, after it's used
+            #delete it because the final rig doesn't need it.
+            if heel_bone:
+                mbs.pop(heel_bone.name)
 
             toes_target = mbs.new_bone("toes target.%s" % suffixletter)
-            toes_target.head = foot.tail.copy()
+            toes_target.head = foot_target.tail.copy()
             toes_target.tail = final_segments_tail_average.copy()
             toes_target.tail = toes_target.head + (foot_target.y_axis() * toes_target.length())
             toes_target.parent = root
@@ -2061,7 +2060,7 @@ def rig_full_body(meta_armature_obj, op=None):
                 s1.parent = foot
 
             for multitarget_segment in multitarget_segments:
-                rig_target_affected(toes_target, multitarget_segment)
+                rig_target_affected(toes_target, multitarget_segment, use_rest_offset=True)
 
             rig_new_target(mbs, "foot ball target.%s" % suffixletter, foot, root, headtotail=1.0, use_rest_offset=True)
 
@@ -2078,8 +2077,7 @@ def rig_full_body(meta_armature_obj, op=None):
         rig_chest_to_shoulder(chest, shoulder, relative_x_axis)
         rig_hand()
 
-        foot_target.parent = root
-        rig_leg(upleg, loleg, foot, foot_target, leg_relative_x_axis)
+        rig_leg(upleg, loleg, foot, leg_relative_x_axis)
         rig_new_target(mbs, name="loleg target.%s" % suffixletter, controlledmetabone=loleg, parent=root)
 
         rig_foot()
@@ -2358,7 +2356,7 @@ def rig_toe(s1, s2, s3):
         flag_bone_deforming_ballsocket_bepuik(s3)
 
 
-def rig_leg(upleg, loleg, foot, foot_target, relative_x_axis='X'):
+def rig_leg(upleg, loleg, foot, relative_x_axis='X'):
     flag_bone_deforming_ballsocket_bepuik(upleg)
 
     flag_bone_deforming_ballsocket_bepuik(loleg)
@@ -2391,8 +2389,6 @@ def rig_leg(upleg, loleg, foot, foot_target, relative_x_axis='X'):
     rig_swing_limit(loleg, foot, 75)
 
     foot.parent = loleg
-
-    rig_target_affected(foot_target, foot, hard_rigidity=True, use_rest_offset=True)
 
 
 def flag_bone_deforming_ballsocket_bepuik(metabone):
