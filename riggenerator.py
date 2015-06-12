@@ -2094,11 +2094,8 @@ def rig_full_body(meta_armature_obj, op=None):
 
     mbs.to_ob(rig_ob)
 
-
-
     prop = rna_idprop_ui_prop_get(rig_ob.pose.bones["spine"], "torso stiffness", create=True)
     prop["min"] = 0.0
-    #prop["max"] = 2.0
     prop["soft_min"] = 0.0
     prop["soft_max"] = 2.0
 
